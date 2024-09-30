@@ -1,9 +1,7 @@
-from inspect import isabstract
 import uuid
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-
-from noxa_be.accounts.enums import *
+from django.contrib.auth.models import AbstractUser, Group, Permission
+from .enums import *
 
 # Create your models here.
 class User (AbstractUser):
@@ -14,36 +12,56 @@ class User (AbstractUser):
     password = models.CharField(max_length=255)
     created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
-    role = models.CharField(choices=Role.choices)
+    role = models.CharField(choices=Role.choices, max_length=50)
+
+    groups = models.ManyToManyField(
+        Group,
+        related_name='custom_user_set',
+        blank=True,
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name='custom_user_permissions_set',
+        blank=True,
+    )
+
     
     def __str__(self):
         return self.username
 
-class TutorProfile (User):
+class TutorProfile (models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='tutor_profile')
     tutorname = models.CharField(max_length=255)
-    address = models.TextField()
-    birthdate = models.DateField()
-    bio_link = models.URLField()
-    phone_number = models.CharField(max_length=15)
-    gender = models.CharField(choices=Gender.choices)
-    educational_background = models.CharField(choices=EducationalBackground.choices)
+    address = models.TextField(blank=True, null=True)
+    birthdate = models.DateField(blank=True, null=True)
+    bio_link = models.URLField(blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    gender = models.CharField(choices=Gender.choices, max_length=50)
+    educational_background = models.CharField(choices=EducationalBackground.choices, max_length=255, blank=True, null=True)
 
     @property
     def tutor_id(self):
-        return self.user_id
+        return self.user.user_id
+    
+    def __str__(self):
+        return self.tutorname
 
  
-class ParentProfile (User):
+class ParentProfile (models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='parent_profile')
     parentname = models.CharField(max_length=255)
-    address = models.TextField()
-    birthdate = models.DateField()
+    address = models.TextField(blank=True, null=True)
+    birthdate = models.DateField(blank=True, null=True)
     phone_number = models.CharField(max_length=15)
-    gender = models.CharField(choices=Gender.choices)
-    description = models.TextField()
+    gender = models.CharField(choices=Gender.choices, max_length=50)
+    description = models.TextField(blank=True, null=True)
 
     @property
     def parent_id(self):
         return self.user_id
+    
+    def __str__(self):
+        return self.parentname
     
 class Certificates (models.Model):
     certificate_id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
@@ -53,13 +71,13 @@ class Certificates (models.Model):
 class JobPost (models.Model):
     post_id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
     parent_id = models.ForeignKey(ParentProfile, on_delete=models.CASCADE)
-    subject = models.CharField(choices=Subject.choices)
+    subject = models.CharField(choices=Subject.choices, max_length=50)
     description = models.TextField()
-    status = models.CharField(choices=Status.choices)
+    status = models.CharField(choices=Status.choices, max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     grade = models.IntegerField()
-    background_desired = models.CharField(choices=EducationalBackground.choices)
+    background_desired = models.CharField(choices=EducationalBackground.choices, max_length=255)
     duration = models.FloatField()
     session_per_week = models.IntegerField()
     wage_per_hour = models.FloatField()
@@ -106,7 +124,7 @@ class Notification (models.Model):
     
 class TutorSubject (models.Model):
     tutor_id = models.ForeignKey(TutorProfile, on_delete=models.CASCADE)
-    subject = models.CharField(choices=Subject.choices)
+    subject = models.CharField(choices=Subject.choices, max_length=50)
     
     def __str__(self):
         return self.subject

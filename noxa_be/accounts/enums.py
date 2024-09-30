@@ -1,7 +1,7 @@
-from noxa_be.accounts import models
+from . import models
+from django.db import models
 
-
-class Enum(models.Choices):
+class Enum(models.TextChoices):
     @classmethod
     def get_choices_display(cls):
         return [choice[1] for choice in cls.choices]
