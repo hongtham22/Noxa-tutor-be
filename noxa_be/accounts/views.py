@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 
-from .helpers import get_tokens_for_user
+from .helpers import get_tokens_for_user, token_blacklisted
 from .models import User, TutorProfile, ParentProfile
 from .serializers.account_serializer import TutorProfileSerializer, ParentProfileSerializer
 
@@ -102,6 +102,17 @@ class RegisterView(APIView):
             return Response({'token': token, 'data': serializer.data}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh', None)
+            if token_blacklisted(refresh_token):
+                return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)  
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

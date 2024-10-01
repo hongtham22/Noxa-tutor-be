@@ -11,3 +11,11 @@ def get_tokens_for_user(user):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
+
+def token_blacklisted(token):
+    try:
+        refresh_token = RefreshToken(token)
+        refresh_token.blacklist()
+        return True
+    except Exception as e:
+        return False
