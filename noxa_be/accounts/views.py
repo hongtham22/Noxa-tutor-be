@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 
+from .permission import IsParent, IsTutor
+
 from .helpers import get_tokens_for_user, token_blacklisted
 from .models import User, TutorProfile, ParentProfile
 from .serializers.account_serializer import TutorProfileSerializer, ParentProfileSerializer
@@ -98,8 +100,7 @@ class RegisterView(APIView):
         
         if serializer.is_valid():
             serializer.save()
-            token = get_tokens_for_user(serializer.instance.user)
-            return Response({'token': token, 'data': serializer.data}, status=status.HTTP_201_CREATED)
+            return Response({'data': serializer.data}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -115,16 +116,22 @@ class LogoutView(APIView):
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def foo(request):
+@permission_classes([IsAuthenticated, IsTutor])
+def foo_tutor(request):
     return Response({'message': 'You are authenticated'}, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsParent])
+def foo_parent(request):
+    return Response({'message': 'You are authenticated'}, status=status.HTTP_200_OK)
 
 class TutorView(BaseView):
     model = TutorProfile
     serializer = TutorProfileSerializer
+    permission_classes = [IsAuthenticated, IsTutor]
 
 class ParentView(BaseView):
     model = ParentProfile
     serializer = ParentProfileSerializer
+    permission_classes = [IsAuthenticated, IsParent]
     
