@@ -73,14 +73,14 @@ class JobPost (models.Model):
     parent_id = models.ForeignKey(ParentProfile, on_delete=models.CASCADE)
     subject = models.CharField(choices=Subject.choices, max_length=50)
     description = models.TextField()
-    status = models.CharField(choices=Status.choices, max_length=50)
+    status = models.CharField(choices=Status.choices, max_length=50, default=Status.PENDING_APPROVAL)
     created_at = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     grade = models.IntegerField()
     background_desired = models.CharField(choices=EducationalBackground.choices, max_length=255)
     duration = models.FloatField()
     session_per_week = models.IntegerField()
-    wage_per_hour = models.FloatField()
+    wage_per_session = models.FloatField()
     student_number = models.IntegerField()
     address = models.TextField()
 
@@ -132,8 +132,9 @@ class TutorSubject (models.Model):
 class ClassTime (models.Model):
     post_id = models.ForeignKey(JobPost, on_delete=models.CASCADE)
     class_id = models.ForeignKey(TutorClasses, on_delete=models.CASCADE, null=True)
-    time_start = models.DateTimeField()
-    time_end = models.DateTimeField()
+    weekday = models.CharField(choices=Weekday.choices, max_length=50, null=True)
+    time_start = models.TimeField()
+    time_end = models.TimeField()
 
     def __str__(self):
         return self.post_id
