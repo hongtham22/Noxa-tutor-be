@@ -31,6 +31,27 @@ class PostView(APIView):
             post_serializer.save()
             return Response(post_serializer.data, status=status.HTTP_201_CREATED)
         return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self, request, pk):
+        post = get_object_or_404(JobPost, post_id=pk)
+        post_serializer = PostSerializer(post, data=request.data)
+        if post_serializer.is_valid():
+            post_serializer.save()
+            return Response(post_serializer.data)
+        return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        post = get_object_or_404(JobPost, post_id=pk)
+        post.delete()
+
+        # check deleted in class_time
+        class_times = ClassTime.objects.filter(post_id=pk)
+        if not class_times:
+            print ('Logic works perfectly')
+        for class_time in class_times:
+            class_time.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
         
     
