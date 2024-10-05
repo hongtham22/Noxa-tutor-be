@@ -66,6 +66,7 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop('user')
         user = User.objects.create_user(**user_data)
         tutor_profile = TutorProfile.objects.create(user=user, **validated_data)
+        print (tutor_profile)
         return tutor_profile
     
     def update(self, instance, validated_data):
