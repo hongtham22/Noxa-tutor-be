@@ -1,5 +1,6 @@
 from . import models
 from django.db import models
+import unicodedata
 
 class Enum(models.TextChoices):
     @classmethod
@@ -8,9 +9,20 @@ class Enum(models.TextChoices):
     
     @classmethod
     def map_display_to_value(cls, display):
+        display_normalized = unicodedata.normalize('NFC', str(display).strip().lower())
+
         for choice in cls.choices:
-            if choice[1] == display:
+            label = choice[1]
+            label_normalized = unicodedata.normalize('NFC', str(label).strip().lower()) 
+            if label_normalized == display_normalized:
                 return choice[0]
+        return None
+    
+    @classmethod
+    def map_value_to_display(cls, value):
+        for choice in cls.choices:
+            if choice[0] == value:
+                return choice[1]
         return None
 
 class Gender(Enum):
