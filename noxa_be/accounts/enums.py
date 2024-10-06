@@ -33,6 +33,7 @@ class Gender(Enum):
 class Role(Enum):
     TUTOR = 'tutor', 'Gia sư'
     PARENT = 'parent', 'Phụ huynh'
+    ADMIN = 'admin', 'Quản trị viên'
 
 class EducationalBackground(Enum):
     HIGH_SHOOL_DIPLOMA = 'high_school_diploma', 'Có bằng tốt nghiệp trung học phổ thông'

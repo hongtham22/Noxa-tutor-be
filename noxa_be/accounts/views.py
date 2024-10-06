@@ -9,7 +9,7 @@ from .permission import IsParent, IsTutor
 
 from .helpers import get_tokens_for_user, token_blacklisted
 from .models import User, TutorProfile, ParentProfile
-from .serializers.account_serializer import TutorProfileSerializer, ParentProfileSerializer
+from .serializers.account_serializer import TutorProfileSerializer, ParentProfileSerializer, UserSerializer
 
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
@@ -87,6 +87,8 @@ class LoginView(APIView):
                 elif role == 'parent':
                     parent = ParentProfile.objects.get(user=user)
                     serializer = ParentProfileSerializer(parent)
+                elif role == 'admin':
+                    serializer = UserSerializer(user)
                 
                 return Response({'data': serializer.data, 'token': token}, status=status.HTTP_200_OK)
 
@@ -104,6 +106,8 @@ class RegisterView(APIView):
             serializer = TutorProfileSerializer(data=request.data)
         elif role == 'parent':
             serializer = ParentProfileSerializer(data=request.data)
+        elif role == 'admin':
+            serializer = UserSerializer(data=request.data)
         else:
             return Response({'message': 'Role must be provided'}, status=status.HTTP_400_BAD_REQUEST)
         
