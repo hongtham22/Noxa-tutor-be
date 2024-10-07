@@ -37,10 +37,10 @@ class Role(Enum):
 
 class EducationalBackground(Enum):
     HIGH_SHOOL_DIPLOMA = 'high_school_diploma', 'Có bằng tốt nghiệp trung học phổ thông'
-    BACHELOR_DEGREE = 'bachelor_degree', 'Có bằng cử nhân'
-    BACHELOR_DEGREE_ENGINEERING = 'bachelor_degree_engineering', 'Có bằng kĩ sư'
-    MASTER_DEGREE = 'master_degree', 'Có bằng thạc sĩ'
-    DOCTORATE_DEGREE = 'doctorate_degree', 'Có bằng tiến sĩ'
+    UNIVERSITY_STUDENT = 'university_student', 'Sinh viên'
+    UNIVERSITY_GRADUATE = 'university_graduate', 'Tốt nghiệp đại học'
+    UNIVERSITY_GRADUATE_EDUCATION = 'university_graduate_education', 'Tốt nghiệp đại học sư phạm'
+    OTHER = 'other', 'Khác'
     
 class Position(Enum):
     STUDENT = 'student', 'Học sinh'

@@ -30,7 +30,17 @@ class AdminPostView(APIView):
             paginator = CustomPagination()
             paginated_posts = paginator.paginate_queryset(posts, request)
 
-            post_serializer = PostSerializer(paginated_posts, many=True, context={'request_type': 'list'})
+            post_serializer = PostSerializer(paginated_posts, many=True, context={'request_type': 'detail'})
             
             # Trả về kết quả phân trang
             return paginator.get_paginated_response(post_serializer.data)
+        
+    def post (self, request):
+        post_id = request.data.get('post_id')
+        post_status = request.data.get('status')
+        post_status = Status.map_display_to_value(post_status)
+        post = JobPost.objects.get(post_id=post_id)
+        post.status = post_status
+        post.save()
+        return Response(status=status.HTTP_200_OK)
+
