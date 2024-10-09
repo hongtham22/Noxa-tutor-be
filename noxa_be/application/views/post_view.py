@@ -9,8 +9,13 @@ from accounts.permission import IsParent, IsTutor
 from accounts.models import * 
 from application.serializers.post_serializer import PostSerializer, ClassTimeSerializer
 
+
+"""
+PostView API endpoint for JobPost model. Use for parent to CRUD their job posts.
+"""
+
 class PostView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated, IsParent]
     def get_permissions(self):
         if self.request.method == 'GET':
             return [AllowAny()]  # Không yêu cầu xác thực cho GET
@@ -23,7 +28,6 @@ class PostView(APIView):
                 posts = JobPost.objects.filter(parent_id=user)
                 post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
             else:
-                print ('WRONG, EHH')
                 post = get_object_or_404(JobPost, post_id=pk)
                 post_serializer = PostSerializer(post, context={'request_type': 'detail'})
         else:
@@ -58,23 +62,23 @@ class PostView(APIView):
             class_time.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-class PostView(APIView):
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [AllowAny()]  # Không yêu cầu xác thực cho GET
-        return [permission() for permission in self.permission_classes] 
+# class PostView(APIView):
+#     def get_permissions(self):
+#         if self.request.method == 'GET':
+#             return [AllowAny()]  # Không yêu cầu xác thực cho GET
+#         return [permission() for permission in self.permission_classes] 
 
-    def get(self, request, pk=None):
-        filters = {key: request.query_params.get(key) for key in ['subject', 'status', 'grade', 'background_desired'] if request.query_params.get(key) is not None}
+#     def get(self, request, pk=None):
+#         filters = {key: request.query_params.get(key) for key in ['subject', 'status', 'grade', 'background_desired'] if request.query_params.get(key) is not None}
 
-        if pk:
-            post = get_object_or_404(JobPost, post_id=pk)
-            serializer = PostSerializer(post)
-        else:
-            posts = JobPost.objects.filter(**filters)
-            serializer = PostSerializer(posts, many=True)
+#         if pk:
+#             post = get_object_or_404(JobPost, post_id=pk)
+#             serializer = PostSerializer(post)
+#         else:
+#             posts = JobPost.objects.filter(**filters)
+#             serializer = PostSerializer(posts, many=True)
         
-        return Response(serializer.data)
+#         return Response(serializer.data)
     
 class PostSearchView(APIView):
     def get_permissions(self):
