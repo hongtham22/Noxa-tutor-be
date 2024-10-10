@@ -1,5 +1,6 @@
 from . import models
 from django.db import models
+import unicodedata
 
 class Enum(models.TextChoices):
     @classmethod
@@ -8,46 +9,67 @@ class Enum(models.TextChoices):
     
     @classmethod
     def map_display_to_value(cls, display):
+        display_normalized = unicodedata.normalize('NFC', str(display).strip().lower())
+
         for choice in cls.choices:
-            if choice[1] == display:
+            label = choice[1]
+            label_normalized = unicodedata.normalize('NFC', str(label).strip().lower()) 
+            if label_normalized == display_normalized:
                 return choice[0]
+        return None
+    
+    @classmethod
+    def map_value_to_display(cls, value):
+        for choice in cls.choices:
+            if choice[0] == value:
+                return choice[1]
         return None
 
 class Gender(Enum):
-    MALE = 'male', 'Male'
-    FEMALE = 'female', 'Female'
-    OTHER = 'other', 'Other'
+    MALE = 'male', 'Nam'
+    FEMALE = 'female', 'Nữ'
+    OTHER = 'other', 'Khác'
     
 class Role(Enum):
-    TUTOR = 'tutor', 'Tutor'
-    PARENT = 'parent', 'Parent'
+    TUTOR = 'tutor', 'Gia sư'
+    PARENT = 'parent', 'Phụ huynh'
+    ADMIN = 'admin', 'Quản trị viên'
 
 class EducationalBackground(Enum):
-    HIGH_SHOOL_DIPLOMA = 'high_school_diploma', 'High School Diploma'
-    BACHELOR_DEGREE = 'bachelor_degree', 'Bachelor Degree'
-    BACHELOR_DEGREE_ENGINEERING = 'bachelor_degree_engineering', 'Bachelor Degree in Engineering'
-    MASTER_DEGREE = 'master_degree', 'Master Degree'
-    DOCTORATE_DEGREE = 'doctorate_degree', 'Doctorate Degree'
+    HIGH_SHOOL_DIPLOMA = 'high_school_diploma', 'Có bằng tốt nghiệp trung học phổ thông'
+    UNIVERSITY_STUDENT = 'university_student', 'Sinh viên'
+    UNIVERSITY_GRADUATE = 'university_graduate', 'Tốt nghiệp đại học'
+    UNIVERSITY_GRADUATE_EDUCATION = 'university_graduate_education', 'Tốt nghiệp đại học sư phạm'
+    OTHER = 'other', 'Khác'
     
 class Position(Enum):
-    STUDENT = 'student', 'Student'
-    WORKING = 'working', 'Working'
+    STUDENT = 'student', 'Học sinh'
+    WORKING = 'working', 'Đang đi làm'
 
 class Subject(Enum):
-    MATH = 'math', 'Math'
-    LITERATURE = 'literature', 'Literature'
-    PHYSICS = 'physics', 'Physics'
-    CHEMISTRY = 'chemistry', 'Chemistry'
-    BIOLOGY = 'biology', 'Biology'
-    ENGLISH = 'english', 'English'
-    HISTORY = 'history', 'History'
-    GEOGRAPHY = 'geography', 'Geography'
-    ECONOMY = 'economy', 'Economy'
-    COMPUTER_SCIENCE = 'computer_science', 'Computer Science'
-    OTHER = 'other', 'Other'
+    MATH = 'math', 'Toán'
+    LITERATURE = 'literature', 'Văn học'
+    PHYSICS = 'physics', 'Vật lý'
+    CHEMISTRY = 'chemistry', 'Hóa học'
+    BIOLOGY = 'biology', 'Sinh học'
+    ENGLISH = 'english', 'Tiếng Anh'
+    HISTORY = 'history', 'Lịch sử'
+    GEOGRAPHY = 'geography', 'Địa lý'
+    ECONOMY = 'economy', 'Kinh tế'
+    COMPUTER_SCIENCE = 'computer_science', 'Khoa học máy tính'
+    OTHER = 'other', 'Khác'
 
 class Status(Enum):
-    PENDING_APPROVAL = 'pending_approval', 'Pending Approval'
-    APPROVED = 'approved', 'Approved'
-    REJECTED = 'rejected', 'Rejected'
-    CLOSED = 'closed', 'Closed'
+    PENDING_APPROVAL = 'pending_approval', 'Đang chờ phê duyệt'
+    APPROVED = 'approved', 'Đã phê duyệt'
+    REJECTED = 'rejected', 'Bị từ chối'
+    CLOSED = 'closed', 'Đã đóng'
+
+class Weekday(Enum):
+    MONDAY = 'monday', 'Thứ hai'
+    TUESDAY = 'tuesday', 'Thứ ba'
+    WEDNESDAY = 'wednesday', 'Thứ tư'
+    THURSDAY = 'thursday', 'Thứ năm'
+    FRIDAY = 'friday', 'Thứ sáu'
+    SATURDAY = 'saturday', 'Thứ bảy'
+    SUNDAY = 'sunday', 'Chủ nhật'

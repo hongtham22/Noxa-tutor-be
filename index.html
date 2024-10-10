@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Notifications</h2>
+    <table id="notification-table">
+        <thead>
+            <tr>
+                <th>Message</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Endpoint SSE
+            const eventSource = new EventSource("http://127.0.0.1:8000/api/notifications/56596b7e-8e65-4ca9-9323-07aa33155584");
+
+            // Listen for messages from the server
+            eventSource.onmessage = function(event) {
+                try {
+                    const dataArray = JSON.parse(event.data);
+                    // parse event.data to array
+                    if (Array.isArray(dataArray)) {
+                        // Lặp qua từng phần tử và parse JSON
+                        dataArray.forEach(dataString => {
+                            const data = JSON.parse(dataString);  // Parse từng chuỗi JSON
+                            const message = data.message;
+                            const time = data.time;
+
+                            // Create a new row in the notification table
+                            const tableBody = document.getElementById("notification-table").getElementsByTagName('tbody')[0];
+                            const newRow = tableBody.insertRow();
+                            const messageCell = newRow.insertCell(0);
+                            const timeCell = newRow.insertCell(1);
+
+                            messageCell.textContent = message;
+                            timeCell.textContent = time;
+
+                            console.log("New notification:", data);
+                        });
+                    }
+                    else {
+                        console.error("Invalid data received:", dataArray);
+                    }
+                } catch (error) {
+                    console.error("Error parsing notification:", error);
+                }
+            };
+
+            // Handle error in SSE connection
+            eventSource.onerror = function(event) {
+                console.error("Error with SSE connection:", event);
+            };
+        });
+    </script>
+
+</body>
+</html>

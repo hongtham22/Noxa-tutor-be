@@ -30,6 +30,20 @@ class IsParent(BasePermission):
         except AuthenticationFailed:
             return super().has_permission(request, view)
         
+class IsAdmin(BasePermission):
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+    
+        try:
+            role = get_role(request)
+            if role == 'admin':
+                return True
+            else:
+                return False
+        except AuthenticationFailed:
+            return super().has_permission(request, view)
+        
 def get_role(request):
     jwt_auth = JWTAuthentication()
     header = jwt_auth.get_header(request)
