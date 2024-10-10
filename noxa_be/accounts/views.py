@@ -79,7 +79,16 @@ class LoginView(APIView):
 
             # If user found, check the password
             if user and user.check_password(password):
-                return Response(get_tokens_for_user(user), status=status.HTTP_200_OK)
+                token = get_tokens_for_user(user)
+                role = user.role
+                if role == 'tutor':
+                    tutor = TutorProfile.objects.get(user=user)
+                    serializer = TutorProfileSerializer(tutor)
+                elif role == 'parent':
+                    parent = ParentProfile.objects.get(user=user)
+                    serializer = ParentProfileSerializer(parent)
+                
+                return Response({'data': serializer.data, 'token': token}, status=status.HTTP_200_OK)
 
             return Response({'message': 'Invalid email or password'}, status=status.HTTP_400_BAD_REQUEST)
 

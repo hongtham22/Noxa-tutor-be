@@ -38,6 +38,10 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         fields = ['tutor_id', 'user', 'tutorname', 'address', 'birthdate', 'bio_link', 'phone_number', 'gender', 'educational_background']
         extra_kwargs = {
             'description': {'required': False},
+            'phone_number': {'required': False},
+            'gender': {'required': False},
+            'tutorname': {'required': False},
+            'address': {'required': False},
             'birthdate': {'required': False},
             'bio_link': {'required': False},
             'educational_background': {'required': False},
@@ -85,6 +89,10 @@ class ParentProfileSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'description': {'required': False},
             'birthdate': {'required': False},
+            'phone_number': {'required': False},
+            'parentname': {'required': False},
+            'address': {'required': False},
+            'gender': {'required': False},
             'parent_id': {'read_only': True}
         }
 
