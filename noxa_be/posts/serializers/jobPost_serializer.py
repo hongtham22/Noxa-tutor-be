@@ -11,3 +11,8 @@ class JobPostSerializer(serializers.ModelSerializer):
     def get_parent_name(self, obj):
         return obj.parent_id.parentname
 
+
+class JobPostStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobPost
+        fields = ['status']

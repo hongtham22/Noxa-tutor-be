@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'posts',
+    'channels'
 ]
 
 REST_FRAMEWORK = {
@@ -84,6 +85,7 @@ TEMPLATES = [
     },
 ]
 
+ASGI_APPLICATION = 'noxa_be.asgi.application'
 WSGI_APPLICATION = 'noxa_be.wsgi.application'
 
 AUTH_USER_MODEL = 'accounts.User'  
