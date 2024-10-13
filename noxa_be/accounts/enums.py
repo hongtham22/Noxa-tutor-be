@@ -59,6 +59,8 @@ class Subject(Enum):
     COMPUTER_SCIENCE = 'computer_science', 'Khoa học máy tính'
     OTHER = 'other', 'Khác'
 
+
+
 class Status(Enum):
     PENDING_APPROVAL = 'pending_approval', 'Đang chờ phê duyệt'
     APPROVED = 'approved', 'Đã phê duyệt'

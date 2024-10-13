@@ -66,6 +66,55 @@ class PostView(APIView):
             class_time.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+# class PostView(APIView):
+#     def get_permissions(self):
+#         if self.request.method == 'GET':
+#             return [AllowAny()]  # Không yêu cầu xác thực cho GET
+#         return [permission() for permission in self.permission_classes] 
+
+#     def get(self, request, pk=None):
+#         filters = {key: request.query_params.get(key) for key in ['subject', 'status', 'grade', 'background_desired'] if request.query_params.get(key) is not None}
+
+#         if pk:
+#             post = get_object_or_404(JobPost, post_id=pk)
+#             serializer = PostSerializer(post)
+#         else:
+#             posts = JobPost.objects.filter(**filters)
+#             serializer = PostSerializer(posts, many=True)
+        
+#         return Response(serializer.data)
+    
+# class PostSearchView(APIView):
+#     def get_permissions(self):
+#         if self.request.method == 'GET':
+#             return [AllowAny()]  # Không yêu cầu xác thực cho GET
+#         return [permission() for permission in self.permission_classes]
+    
+    
+#     def get(self, request):
+#         query = request.query_params.get('query', None)
+#         filters = {key: request.query_params.get(key) for key in ['subject', 'status', 'grade', 'background_desired'] if request.query_params.get(key) is not None}
+#         posts = JobPost.objects.all()
+
+#         if query:
+#             posts = JobPost.objects.filter(
+#                 Q(subject__icontains=query) |
+#                 Q(status__icontains=query) |
+#                 Q(grade__icontains=query) | 
+#                 Q(background_desired__icontains=query) |
+#                 Q(duration__icontains=query) | 
+#                 Q(session_per_week__icontains=query) |
+#                 Q(wage_per_hour__icontains=query) | 
+#                 Q(student_number__icontains=query)
+#             )
+
+#         if filters:
+#             posts = posts.filter(**filters)
+
+
+#         serializer = PostSerializer(posts, many=True)
+        
+#         return Response(serializer.data)
 def convert_to_unicode(text):
     print("text", text)
     text = text.lower()
@@ -100,17 +149,11 @@ class PostSearchView(APIView):
 
     def get(self, request):
         query = request.query_params.get('query', None)
-        q_subject = request.query_params.get('subject', None)
         filters = Q()
-        results = {}
-
         # filters = {key: request.query_params.get(key) for key in ['subject', 'status', 'grade', 'background_desired'] if request.query_params.get(key) is not None}
 
         # Extract filters from query params
-        extracted_filters = {key: request.query_params.get(key) for key in ['status', 'grade', 'background_desired'] if request.query_params.get(key) is not None}
-        for key, value in extracted_filters.items():
-            results[key] = value
-
+        extracted_filters = {key: request.query_params.get(key) for key in ['subject', 'status', 'grade', 'background_desired'] if request.query_params.get(key) is not None}
         filters |= Q(**extracted_filters)
 
 
@@ -119,14 +162,25 @@ class PostSearchView(APIView):
         pattern_grade = r'(cap)(\d+)'
         pattern_duration = r'(\d+)(tuan|thang)'
         subjects_enum = Subject.choices  # Dùng thuộc tính choices của enum
-        pattern_subject = r'(Toan|Vanhoc|Van|Nguvan|Vatly|Ly|Hoahoc|Hoa|Sinhhoc|TiengAnh|Anhvan|Lichsu|Su|Dialy|Dia|Kinhte|Khoahocmaytinh|Khoahoc)'
+        pattern_subject = r'(Toan|Vanhoc|Van|Nguvan|Vatly|Ly|Hoahoc|Hoa|Sinhhoc|Sinh|TiengAnh|Anhvan|Lichsu|Su|Dialy|Dia|Kinhte|Khoahocmaytinh|Khoahoc)'
+        print('pattern_subject', pattern_subject)
+        # pattern_subject
+        # pattern_subject = '|'.join(unidecode(subject[1].strip().replace(' ', '')) for subject in subjects_enum[:-1])
+        # pattern_subject = pattern_subject.join(r'(|toan|van|ly|hoa|sinh|anh|su|dia|khoahoc|)')
+        # pattern_subject = f"{pattern_subject}|toan|van|ly|hoa|sinh|anh|su|dia|khoahoc"
+        # pattern_subject = pattern_subject.join(unidecode(subject[1].strip().replace(' ', '')) for subject in subjects_enum[:-1])
+        # pattern_subject = pattern_subject.join(unidecode(subject[1].strip().replace(' ', '')) for subject in subjects_enum[:-1])
+        # print('pattern_subject', pattern_subject)
 
         if query:
             normalized_query = unidecode(query.replace(' ', ''))
             print('normalized_query', normalized_query)
 
+            # Khởi tạo một dictionary để lưu trữ kết quả
+            results = {}
             # posts = JobPost.objects.all() 
             # filters = Q()
+            
             
             # session
             match = re.search(pattern_session, normalized_query)
@@ -170,51 +224,19 @@ class PostSearchView(APIView):
                 print(type(subject))
                 print(">>>>: ", results['subject_pattern'])
                 print(">>>>: ", subject)
+                # Toan
+                # posts = posts.filter(subject=subject)
                 filters |= Q(subject=results['subject_pattern'])
 
-        if q_subject:
-            pattern_subject = r'(Toan|Vanhoc|Van|Nguvan|Vatly|Ly|Hoahoc|Hoa|Sinhhoc|Sinh|TiengAnh|Anhvan|Lichsu|Su|Dialy|Dia|Kinhte|Khoahocmaytinh|Khoahoc)'
-            print('q_subject', q_subject)
-            q_subject = unidecode(q_subject.replace(' ', ''))
-            match_subject = re.search(pattern_subject, q_subject, re.IGNORECASE)
-            if match_subject:
-                sbject = match_subject.group()
-                sbject = sbject.lower()
-                subject = convert_to_unicode(sbject)
-                results['subject'] = subject
-                filters |= Q(subject=subject)
         
         # Lọc posts với tất cả các điều kiện đã được xác định
         print('filters', filters)
         posts = JobPost.objects.filter(filters) 
         serializer = PostSerializer(posts, many=True)
-
         return Response({
             "message": "Kết quả tìm kiếm",
-            "key": results if results else "None",
+            # "data": results,
+            # "data": results if results else "type",
             "posts": serializer.data
-        })
-           
-
-
-
-class PostSearch(APIView):
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [AllowAny()]  # Không yêu cầu xác thực cho GET
-        return [permission() for permission in self.permission_classes]
-    
-    def get(self, request):
-        query = request.query_params.get('query', None)
-        print('query', query)
-        filters = Q()
-        filters |= Q(subject=query)
-        posts = JobPost.objects.filter(
-                Q(subject__icontains=query)
-            )
-        posts = JobPost.objects.filter(filters) 
-        serializer = PostSerializer(posts, many=True)
-        return Response({
-            "posts": serializer.data,
-            "a": "a"
             })
+

@@ -2,6 +2,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from .enums import *
+from unidecode import unidecode
 
 # Create your models here.
 class User (AbstractUser):
@@ -84,8 +85,12 @@ class JobPost (models.Model):
     student_number = models.IntegerField()
     address = models.TextField()
 
-    def __str__(self):
-        return self.post_id
+    # def save(self, *args, **kwargs):
+    #     self.subject = unidecode(self.subject)  # Chuyển đổi thành không dấu
+    #     super().save(*args, **kwargs)
+
+    # def __str__(self):
+    #     return self.post_id
     
 class JobRegister (models.Model):
     post_id = models.ForeignKey(JobPost, on_delete=models.CASCADE)
