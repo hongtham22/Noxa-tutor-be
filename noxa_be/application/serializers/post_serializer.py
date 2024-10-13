@@ -2,7 +2,6 @@ from rest_framework import serializers
 from accounts.models import User, TutorProfile, ParentProfile, JobPost, TutorClasses, Feedback, Notification, TutorSubject, ClassTime
 
 from accounts.enums import *
-import time
 
 
 class ClassTimeSerializer(serializers.ModelSerializer):
@@ -39,12 +38,13 @@ class ClassTimeSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     class_times = ClassTimeSerializer(many=True, required=False)
-
+    parent_name = serializers.SerializerMethodField()
     class Meta:
         model = JobPost
         fields = '__all__'
         extra_kwargs = {
             'post_id': {'read_only': True},
+            'parent_name': {'read_only': True},
             'created_at': {'read_only': True},
             'last_updated': {'read_only': True},
             'status': {'read_only': True},
@@ -134,3 +134,7 @@ class PostSerializer(serializers.ModelSerializer):
                 class_time = ClassTime.objects.create(**class_time_data, post_id=instance)
 
         return instance
+
+    def get_parent_name(self, obj):
+        parent = ParentProfile.objects.get(user=obj.parent_id)
+        return parent.parentname

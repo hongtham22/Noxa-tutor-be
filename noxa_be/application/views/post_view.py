@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from accounts.permission import IsParent, IsTutor
 from accounts.models import * 
 from application.serializers.post_serializer import PostSerializer, ClassTimeSerializer
+from application.serializers.job_registration_serializer import JobRegistrationSerializer
 
 
 """
@@ -29,7 +30,9 @@ class PostView(APIView):
                 post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
             else:
                 post = get_object_or_404(JobPost, post_id=pk)
-                post_serializer = PostSerializer(post, context={'request_type': 'detail'})
+                job_registerd = JobRegister.objects.filter(post_id=post)
+                registration_serializer = JobRegistrationSerializer(job_registerd, many=True)
+                return Response(registration_serializer.data)
         else:
             posts = JobPost.objects.all()
             post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
