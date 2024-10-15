@@ -33,9 +33,13 @@ class PostView(APIView):
                 post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
             else:
                 post = get_object_or_404(JobPost, post_id=pk)
+                post_serializer = PostSerializer(post, context={'request_type': 'detail'})
                 job_registerd = JobRegister.objects.filter(post_id=post)
                 registration_serializer = JobRegistrationSerializer(job_registerd, many=True)
-                return Response(registration_serializer.data)
+                
+                data = post_serializer.data
+                data['registration'] = registration_serializer.data
+                return Response(data)
         else:
             posts = JobPost.objects.all()
             post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
@@ -73,10 +77,11 @@ class SearchView(APIView):
 
     def get(self, request):
         start_time = time.time()
-        
-        text = request.query_params.get('text')
+        params = {key.strip(): value for key, value in request.query_params.items()}
+        text = params.get('text').strip()
         if not text:
             text = request.data.get('text')
+            print ('Text in request data: ', text)
         posts = JobPost.objects.all()
         posts_serializer = PostSerializer(posts, many=True)
         result = []

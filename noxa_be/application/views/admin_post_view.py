@@ -36,7 +36,7 @@ class AdminPostView(APIView):
                 return Response(post_serializer.data)
         else:
             status = request.query_params.get('status', 'pending')
-            posts = self.get_posts_by_status(request, status)
+            posts = self.helper.get_posts_by_status(request, status)
         return self.helper.paginate_posts(posts, request)
             
     def post (self, request):

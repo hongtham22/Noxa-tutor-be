@@ -38,12 +38,14 @@ class ClassTimeSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     class_times = ClassTimeSerializer(many=True, required=False)
+    username = serializers.SerializerMethodField()
     parent_name = serializers.SerializerMethodField()
     class Meta:
         model = JobPost
         fields = '__all__'
         extra_kwargs = {
             'post_id': {'read_only': True},
+            'username': {'read_only': True},
             'parent_name': {'read_only': True},
             'created_at': {'read_only': True},
             'last_updated': {'read_only': True},
@@ -135,3 +137,7 @@ class PostSerializer(serializers.ModelSerializer):
     def get_parent_name(self, obj):
         parent = ParentProfile.objects.get(user=obj.parent_id)
         return parent.parentname
+    
+    def get_username(self, obj):
+        username = obj.parent_id.username
+        return username

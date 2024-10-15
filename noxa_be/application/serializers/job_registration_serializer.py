@@ -10,7 +10,7 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'registration_id': {'read_only': True},
             'tutor_name': {'read_only': True},
-            'post_id': {'required': True},
+            'post_id': {'write_only': True},
             'tutor_id': {'required': True},
         }
 
