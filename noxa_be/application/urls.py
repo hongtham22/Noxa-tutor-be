@@ -1,6 +1,6 @@
 from django.urls import path
 
-from application.views.post_view import PostView, PostSearchView, PostSearch
+from application.views.post_view import PostView, SearchView, testhah
 from application.views.admin_post_view import AdminPostView
 from application.views.enum_view import EnumView
 from application.views.notification_view import sse_notification
@@ -13,7 +13,6 @@ urlpatterns = [
     path('enum/', EnumView.as_view()),
     path('notifications/<str:parent_id>', sse_notification),
 
-    path('posts/search', PostSearchView.as_view()),
-
-    path('posts/test', PostSearch.as_view())
+    path('posts/search', SearchView.as_view()),
+    path('posts/loc2', testhah.as_view())
 ]
