@@ -122,16 +122,13 @@ class PostSerializer(serializers.ModelSerializer):
         instance.status = Status.PENDING_APPROVAL
         instance.save()
 
+        class_times = ClassTime.objects.filter(post_id=instance)
+        for class_time in class_times:
+            class_time.delete()
+        
         for class_time_data in class_times_data:
-            class_time_id = class_time_data.get('id', None)
-            if class_time_id:
-                class_time = ClassTime.objects.get(id=class_time_id)
-                class_time.weekday = Weekday.map_display_to_value(class_time_data.get('weekday', class_time.weekday))
-                class_time.time_start = class_time_data.get('time_start', class_time.time_start)
-                class_time.time_end = class_time_data.get('time_end', class_time.time_end)
-                class_time.save()
-            else:
-                class_time = ClassTime.objects.create(**class_time_data, post_id=instance)
+            class_time_data['weekday'] = Weekday.map_display_to_value(class_time_data.get('weekday'))
+            class_time = ClassTime.objects.create(**class_time_data, post_id=instance)
 
         return instance
 

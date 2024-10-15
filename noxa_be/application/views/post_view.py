@@ -10,7 +10,10 @@ from accounts.models import *
 from application.serializers.post_serializer import PostSerializer, ClassTimeSerializer
 from application.serializers.job_registration_serializer import JobRegistrationSerializer
 
-
+from rest_framework.decorators import api_view, permission_classes
+import unicodedata
+import re
+import time
 """
 PostView API endpoint for JobPost model. Use for parent to CRUD their job posts.
 """
@@ -64,57 +67,68 @@ class PostView(APIView):
         for class_time in class_times:
             class_time.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-# class PostView(APIView):
-#     def get_permissions(self):
-#         if self.request.method == 'GET':
-#             return [AllowAny()]  # Không yêu cầu xác thực cho GET
-#         return [permission() for permission in self.permission_classes] 
 
-#     def get(self, request, pk=None):
-#         filters = {key: request.query_params.get(key) for key in ['subject', 'status', 'grade', 'background_desired'] if request.query_params.get(key) is not None}
+class SearchView(APIView):
+    permission_classes = [AllowAny]
 
-#         if pk:
-#             post = get_object_or_404(JobPost, post_id=pk)
-#             serializer = PostSerializer(post)
-#         else:
-#             posts = JobPost.objects.filter(**filters)
-#             serializer = PostSerializer(posts, many=True)
-        
-#         return Response(serializer.data)
-    
-class PostSearchView(APIView):
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [AllowAny()]  # Không yêu cầu xác thực cho GET
-        return [permission() for permission in self.permission_classes]
-    
-    
     def get(self, request):
-        query = request.query_params.get('query', None)
-        filters = {key: request.query_params.get(key) for key in ['subject', 'status', 'grade', 'background_desired'] if request.query_params.get(key) is not None}
+        start_time = time.time()
+        
+        text = request.query_params.get('text')
+        if not text:
+            text = request.data.get('text')
         posts = JobPost.objects.all()
+        posts_serializer = PostSerializer(posts, many=True)
+        result = []
 
-        if query:
-            posts = JobPost.objects.filter(
-                Q(subject__icontains=query) |
-                Q(status__icontains=query) |
-                Q(grade__icontains=query) | 
-                Q(background_desired__icontains=query) |
-                Q(duration__icontains=query) | 
-                Q(session_per_week__icontains=query) |
-                Q(wage_per_hour__icontains=query) | 
-                Q(student_number__icontains=query)
-            )
-
-        if filters:
-            posts = posts.filter(**filters)
-
-
-        serializer = PostSerializer(posts, many=True)
+        def matches_text(field_value):
+            return self.remove_accents(text) in self.remove_accents(field_value)
         
-        return Response(serializer.data)
+        for post in posts_serializer.data:
+            if any((
+                matches_text(post['subject']),
+                matches_text(post['grade']),
+                matches_text(post['background_desired']),
+                matches_text(post['session_per_week']),
+                matches_text(post['wage_per_session']),
+                matches_text(post['student_number']),
+                matches_text(post['description']),
+                matches_text(post['address']),
+                self.search_in_profile(text, post)
+            )):
+                result.append(post)
+                continue
 
+            for class_time in post['class_times']:
+                if any((
+                    self.search_in_weekday(text, post),
+                    matches_text(class_time['time_start']),
+                    matches_text(class_time['time_end'])
+                )):
+                    result.append(post)
+                    break
 
-        
-    
+        print('time: ', time.time() - start_time)
+        return Response(result)
+
+    @staticmethod
+    def remove_accents(text):
+        text = str(text)
+        text = unicodedata.normalize('NFD', text)
+        text = re.sub(r'[\u0300-\u036f]', '', text)
+        return text.lower()
+
+    @staticmethod
+    def search_in_profile(text, post):
+        user = post['parent_id']
+        parent = ParentProfile.objects.get(user=user)
+        return SearchView.remove_accents(text) in SearchView.remove_accents(parent.parentname)
+
+    @staticmethod
+    def search_in_weekday(text, post):
+        for class_time in post['class_times']:
+            weekday = class_time['weekday']
+            weekday = Weekday.map_value_to_display(weekday)
+            if SearchView.remove_accents(text) in SearchView.remove_accents(weekday):
+                return True
+        return False

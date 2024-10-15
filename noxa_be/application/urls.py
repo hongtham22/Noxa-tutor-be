@@ -1,6 +1,6 @@
 from django.urls import path
 
-from application.views.post_view import PostView
+from application.views.post_view import PostView, SearchView
 from application.views.admin_post_view import AdminPostView
 from application.views.tutor_post_view import TutorPostView
 from application.views.enum_view import EnumView
@@ -14,5 +14,6 @@ urlpatterns = [
     path('enum/', EnumView.as_view()),
     path('tutor/posts/', TutorPostView.as_view()),
     path('tutor/posts/<str:pk>/', TutorPostView.as_view()),
-    path('notifications/<str:parent_id>/', sse_notification)
+    path('notifications/<str:parent_id>/', sse_notification),
+    path('search/', SearchView.as_view()),
 ]
