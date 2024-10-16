@@ -1,13 +1,15 @@
 from django.shortcuts import get_object_or_404, render
 from django.db.models import Q
-from rest_framework.decorators import api_view, permission_classes
+from django.views import View
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import AccessToken
+from django.views.decorators.csrf import csrf_exempt
 
 from .permission import IsParent, IsTutor
 
-from .helpers import get_tokens_for_user, token_blacklisted
+from .helpers import decode_token, get_tokens_for_user, token_blacklisted, send_email_verification
 from .models import User, TutorProfile, ParentProfile
 from .serializers.account_serializer import TutorProfileSerializer, ParentProfileSerializer, UserSerializer
 
@@ -60,6 +62,13 @@ class BaseView(APIView):
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+
+"""
+Login API endpoint 
+
+- POST: login with email or username and password. Return user data and token if login successfully.
+  While login, check if user is active or not. If not, return message 'Please verify your email'
+"""
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -76,11 +85,15 @@ class LoginView(APIView):
                 user = User.objects.filter(Q(username=username)).first()
             else:
                 return Response({'message': 'Either email or username must be provided'}, status=status.HTTP_400_BAD_REQUEST)
-
+            
             # If user found, check the password
             if user and user.check_password(password):
+                if user.is_active == False:
+                    return Response({'message': 'Please verify your email'}, status=status.HTTP_400_BAD_REQUEST)
+                
                 token = get_tokens_for_user(user)
                 role = user.role
+
                 if role == 'tutor':
                     tutor = TutorProfile.objects.get(user=user)
                     serializer = TutorProfileSerializer(tutor)
@@ -97,11 +110,25 @@ class LoginView(APIView):
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+
+"""
+Register API endpoint
+
+- POST: register new user with role [tutor, parent, admin]. Return user data and message if register successfully.
+  If role != admin, send email verification to user. If failed to send email, delete the user and return error message.
+"""
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        role = request.data.get('user', None).get('role', None)
+        user_data = request.data.get('user')
+        if not user_data:
+            return Response({'message': 'User data must be provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        role = user_data.get('role')
+        if role not in ['tutor', 'parent', 'admin']:
+            return Response({'message': 'Invalid or missing role'}, status=status.HTTP_400_BAD_REQUEST)
+        
         if role == 'tutor':
             serializer = TutorProfileSerializer(data=request.data)
         elif role == 'parent':
@@ -112,9 +139,17 @@ class RegisterView(APIView):
             return Response({'message': 'Role must be provided'}, status=status.HTTP_400_BAD_REQUEST)
         
         if serializer.is_valid():
-            serializer.save()
-            return Response({'data': serializer.data}, status=status.HTTP_201_CREATED)
-        
+            user = serializer.save()
+            if (role != 'admin'):
+                try:
+                    user = user.user
+                    send_email_verification(user, request)
+                except Exception as e:
+                    User.objects.get(user_id=user.user_id).delete()
+                    print (str(e))
+                    return Response({'message': 'Failed to send email verification with error', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({'data': serializer.data, 'message': 'Please verify your email'}, status=status.HTTP_201_CREATED) 
+            return Response({'data': serializer.data, 'message': 'User created successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class LogoutView(APIView):
@@ -127,16 +162,40 @@ class LogoutView(APIView):
                 return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)  
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-@api_view(['GET'])
-@permission_classes([IsAuthenticated, IsTutor])
-def foo_tutor(request):
-    return Response({'message': 'You are authenticated'}, status=status.HTTP_200_OK)
+        
+class ActivateAccountView(View):
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated, IsParent])
-def foo_parent(request):
-    return Response({'message': 'You are authenticated'}, status=status.HTTP_200_OK)
+    def get(self, request):
+        token = request.GET.get('token', None)
+        if token is None:
+            return Response({'message': 'Token must be provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        login_redirect_url = request.build_absolute_uri('/login/')
+        re_verify_url = request.build_absolute_uri('/api/reverify-email/')
+        try:
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            user = User.objects.get(user_id=user_id)
+            user.is_active = True
+            user.save()
+            return render(request, 'account_activated.html', context={'redirect_url': login_redirect_url})
+        except Exception as e:
+            return render(request, 'activated_failed.html', context={'re_verify_url': re_verify_url, 'error': str(e)})
+        
+class ReverifyEmailView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        email = request.query_params.get('email', None)
+        try:
+            user = User.objects.get(email=email)
+            if user.is_active:
+                return Response({'message': 'Your account is already activated'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                send_email_verification(user, request)
+                login_redirect_url = request.build_absolute_uri('/login/')
+                return Response({'message': 'Email verification sent successfully', 'redirect_url': login_redirect_url}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class TutorView(BaseView):
     model = TutorProfile

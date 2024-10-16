@@ -18,6 +18,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
+        user.is_active = False
+        user.save()
+        print (user)
         return user
 
 
@@ -69,6 +72,8 @@ class TutorProfileSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = User.objects.create_user(**user_data)
+        user.is_active = False
+        user.save()
         tutor_profile = TutorProfile.objects.create(user=user, **validated_data)
         print (tutor_profile)
         return tutor_profile
@@ -118,6 +123,8 @@ class ParentProfileSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = User.objects.create_user(**user_data)
+        user.is_active = False
+        user.save()
         parent_profile = ParentProfile.objects.create(user=user, **validated_data)
         return parent_profile
     
