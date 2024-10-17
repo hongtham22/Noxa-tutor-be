@@ -147,6 +147,15 @@ class ParentProfileSerializer(serializers.ModelSerializer):
         if not self.instance and 'user' not in data:
             raise serializers.ValidationError({"user": "This is required to create new record"})
         return data
+    
+    def to_internal_value(self, data):
+        data = data.copy()
+
+        gender = data.get('gender', None)
+        if gender:
+            data['gender'] = Gender.map_display_to_value(str(gender))
+
+        return data
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
