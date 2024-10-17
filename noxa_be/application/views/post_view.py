@@ -41,8 +41,14 @@ class PostView(APIView):
                 data['registration'] = registration_serializer.data
                 return Response(data)
         else:
-            posts = JobPost.objects.all()
-            post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
+            if request.user.is_authenticated:
+                user_id = request.user
+                registered_posts = JobRegister.objects.filter(tutor_id=user_id)
+                query = Q(status=Status.APPROVED) & ~Q(post_id__in=[post.post_id.post_id for post in registered_posts])
+                posts = JobPost.objects.filter(query)
+            else:
+                posts = JobPost.objects.all()
+            post_serializer = PostSerializer(posts, many=True, context={'request_type': 'list'})
         return Response(post_serializer.data)
     
     def post(self, request):
