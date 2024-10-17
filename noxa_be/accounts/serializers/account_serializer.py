@@ -185,11 +185,17 @@ class ParentProfileSerializer(serializers.ModelSerializer):
         instance.description = validated_data.get('description', instance.description)
         instance.gender = validated_data.get('gender', instance.gender)
 
-        if instance.gender == Gender.MALE:
-            instance.avatar = 'avatars/common_male.png'
-        elif instance.gender == Gender.FEMALE:
-            instance.avatar = 'avatars/common_female.png'
+        avatar = validated_data.get('avatar', None)
+        if avatar:
+            if isinstance(avatar, list):  
+                avatar = avatar[0] 
+            instance.avatar = avatar
 
+        if instance.avatar is None:
+            if instance.gender == Gender.MALE:
+                instance.avatar = 'avatars/common_male.png'
+            elif instance.gender == Gender.FEMALE:
+                instance.avatar = 'avatars/common_female.png'
         instance.save()
         return instance
     
