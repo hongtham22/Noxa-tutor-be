@@ -5,11 +5,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
-from django.views.decorators.csrf import csrf_exempt
 
 from .permission import IsParent, IsTutor
 
-from .helpers import decode_token, get_tokens_for_user, token_blacklisted, send_email_verification
+from .helpers import get_tokens_for_user, token_blacklisted, send_email_verification
 from .models import User, TutorProfile, ParentProfile
 from .serializers.account_serializer import TutorProfileSerializer, ParentProfileSerializer, UserSerializer
 
@@ -196,6 +195,29 @@ class ReverifyEmailView(APIView):
                 return Response({'message': 'Email verification sent successfully', 'redirect_url': login_redirect_url}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class AvatarView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        
+        user_id = request.user.user_id
+        user = User.objects.get(user_id=user_id)
+        role = user.role
+
+        if role == 'tutor':
+            tutor = TutorProfile.objects.get(user=user)
+            serializer = TutorProfileSerializer(tutor, data=request.data, partial=True)
+        elif role == 'parent':
+            parent = ParentProfile.objects.get(user=user)
+            serializer = ParentProfileSerializer(parent, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            avatar_url = request.build_absolute_uri(serializer.instance.avatar.url)
+            return Response({'message': 'Avatar uploaded successfully', 'avatar_url': avatar_url}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class TutorView(BaseView):
     model = TutorProfile

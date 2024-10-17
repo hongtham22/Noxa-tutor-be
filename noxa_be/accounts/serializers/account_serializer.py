@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from accounts.enums import EducationalBackground, Gender
 from ..models import User, TutorProfile, ParentProfile
 
 
@@ -42,11 +44,12 @@ class TutorProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TutorProfile    
-        fields = ['tutor_id', 'user', 'tutorname', 'address', 'birthdate', 'bio_link', 'phone_number', 'gender', 'educational_background']
+        fields = ['tutor_id', 'user', 'tutorname', 'address', 'birthdate', 'bio_link', 'phone_number', 'gender', 'educational_background', 'avatar']
         extra_kwargs = {
             'description': {'required': False},
             'phone_number': {'required': False},
             'gender': {'required': False},
+            'avatar': {'required': False},
             'tutorname': {'required': False},
             'address': {'required': False},
             'birthdate': {'required': False},
@@ -66,8 +69,28 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         for field in representation:
             if representation[field] is None:
                 representation[field] = 'Not recorded'
+
+            elif field == 'gender':
+                representation[field] = Gender.map_value_to_display(representation[field])
+            
+            elif field == 'educational_background':
+                representation[field] = EducationalBackground.map_value_to_display(representation[field])
+                                                                                   
         
         return representation
+    
+    def to_internal_value(self, data):
+        data = data.copy()
+
+        gender = data.get('gender', None)
+        if gender:
+            data['gender'] = Gender.map_display_to_value(str(gender))
+
+        educational_background = data.get('educational_background', None)
+        if educational_background:
+            data['educational_background'] = EducationalBackground.map_display_to_value(educational_background)
+
+        return data
         
     def create(self, validated_data):
         user_data = validated_data.pop('user')
@@ -85,8 +108,21 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         instance.bio_link = validated_data.get('bio_link', instance.bio_link)
         instance.phone_number = validated_data.get('phone_number', instance.phone_number)
         instance.educational_background = validated_data.get('educational_background', instance.educational_background)
+        instance.gender = validated_data.get('gender', instance.gender)
+        
+        avatar = validated_data.get('avatar', None)
+        if avatar:
+            if isinstance(avatar, list):  
+                avatar = avatar[0] 
+            instance.avatar = avatar
 
+        if instance.avatar is None:
+            if instance.gender == Gender.MALE:
+                instance.avatar = 'avatars/common_male.png'
+            elif instance.gender == Gender.FEMALE:
+                instance.avatar = 'avatars/common_female.png'
         instance.save()
+
         return instance
     
 class ParentProfileSerializer(serializers.ModelSerializer):
@@ -95,7 +131,7 @@ class ParentProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ParentProfile
-        fields = ['parent_id', 'user', 'parentname', 'address', 'birthdate', 'phone_number', 'gender', 'description']
+        fields = ['parent_id', 'user', 'parentname', 'address', 'birthdate', 'phone_number', 'gender', 'description', 'avatar']
         extra_kwargs = {
             'description': {'required': False},
             'birthdate': {'required': False},
@@ -103,6 +139,7 @@ class ParentProfileSerializer(serializers.ModelSerializer):
             'parentname': {'required': False},
             'address': {'required': False},
             'gender': {'required': False},
+            'avatar': {'required': False},
             'parent_id': {'read_only': True}
         }
 
@@ -134,6 +171,12 @@ class ParentProfileSerializer(serializers.ModelSerializer):
         instance.birthdate = validated_data.get('birthdate', instance.birthdate)
         instance.phone_number = validated_data.get('phone_number', instance.phone_number)
         instance.description = validated_data.get('description', instance.description)
+        instance.gender = validated_data.get('gender', instance.gender)
+
+        if instance.gender == Gender.MALE:
+            instance.avatar = 'avatars/common_male.png'
+        elif instance.gender == Gender.FEMALE:
+            instance.avatar = 'avatars/common_female.png'
 
         instance.save()
         return instance

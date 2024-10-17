@@ -36,8 +36,9 @@ class TutorProfile (models.Model):
     birthdate = models.DateField(blank=True, null=True)
     bio_link = models.URLField(blank=True, null=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
-    gender = models.CharField(choices=Gender.choices, max_length=50)
+    gender = models.CharField(choices=Gender.choices, max_length=50, blank=True, null=True)
     educational_background = models.CharField(choices=EducationalBackground.choices, max_length=255, blank=True, null=True)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
     @property
     def tutor_id(self):
@@ -53,9 +54,10 @@ class ParentProfile (models.Model):
     address = models.TextField(blank=True, null=True)
     birthdate = models.DateField(blank=True, null=True)
     phone_number = models.CharField(max_length=15)
-    gender = models.CharField(choices=Gender.choices, max_length=50)
+    gender = models.CharField(choices=Gender.choices, max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    
     @property
     def parent_id(self):
         return self.user_id
