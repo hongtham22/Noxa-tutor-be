@@ -147,6 +147,15 @@ class ParentProfileSerializer(serializers.ModelSerializer):
         if not self.instance and 'user' not in data:
             raise serializers.ValidationError({"user": "This is required to create new record"})
         return data
+    
+    def to_internal_value(self, data):
+        data = data.copy()
+
+        gender = data.get('gender', None)
+        if gender:
+            data['gender'] = Gender.map_display_to_value(str(gender))
+
+        return data
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -154,6 +163,9 @@ class ParentProfileSerializer(serializers.ModelSerializer):
         for field in representation:
             if representation[field] is None:
                 representation[field] = 'Not recorded'
+
+            elif field == 'gender':
+                representation[field] = Gender.map_value_to_display(representation[field])
         
         return representation
 
@@ -173,11 +185,17 @@ class ParentProfileSerializer(serializers.ModelSerializer):
         instance.description = validated_data.get('description', instance.description)
         instance.gender = validated_data.get('gender', instance.gender)
 
-        if instance.gender == Gender.MALE:
-            instance.avatar = 'avatars/common_male.png'
-        elif instance.gender == Gender.FEMALE:
-            instance.avatar = 'avatars/common_female.png'
+        avatar = validated_data.get('avatar', None)
+        if avatar:
+            if isinstance(avatar, list):  
+                avatar = avatar[0] 
+            instance.avatar = avatar
 
+        if instance.avatar is None:
+            if instance.gender == Gender.MALE:
+                instance.avatar = 'avatars/common_male.png'
+            elif instance.gender == Gender.FEMALE:
+                instance.avatar = 'avatars/common_female.png'
         instance.save()
         return instance
     

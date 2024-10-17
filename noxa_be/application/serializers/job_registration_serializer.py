@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from accounts.models import JobPost, JobRegister, TutorProfile, User
+from accounts.enums import Status
 
 class JobRegistrationSerializer(serializers.ModelSerializer):
     tutor_name = serializers.SerializerMethodField()
@@ -29,6 +30,10 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
             tutor_profile = TutorProfile.objects.filter(user=tutor).exists()
             if not tutor_profile:
                 raise serializers.ValidationError({"tutor_id": "Tutor not found"})
+            
+        # check if post hasn't been approved
+        if post.status != Status.APPROVED:
+            raise serializers.ValidationError({"post_id": "This post is not approved by admin"})
             
         if JobRegister.objects.filter(post_id=post_id, tutor_id=tutor_id).exists():
             raise serializers.ValidationError({"tutor_id": "Tutor had registered this class"})
