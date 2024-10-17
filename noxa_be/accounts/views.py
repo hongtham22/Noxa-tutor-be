@@ -148,6 +148,9 @@ class RegisterView(APIView):
                     print (str(e))
                     return Response({'message': 'Failed to send email verification with error', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
                 return Response({'data': serializer.data, 'message': 'Please verify your email'}, status=status.HTTP_201_CREATED) 
+            user = user.user
+            user.is_active = True
+            user.save()
             return Response({'data': serializer.data, 'message': 'User created successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
