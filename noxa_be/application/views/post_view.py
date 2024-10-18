@@ -9,11 +9,14 @@ from accounts.permission import IsParent, IsTutor
 from accounts.models import * 
 from application.serializers.post_serializer import PostSerializer, ClassTimeSerializer
 from application.serializers.job_registration_serializer import JobRegistrationSerializer
+from application.serializers.class_serializer import ClassSerializer
 
 from rest_framework.decorators import api_view, permission_classes
 import unicodedata
 import re
 import time
+
+
 """
 PostView API endpoint for JobPost model. Use for parent to CRUD their job posts.
 """
@@ -22,7 +25,7 @@ class PostView(APIView):
     permission_classes = [IsAuthenticated, IsParent]
     def get_permissions(self):
         if self.request.method == 'GET':
-            return [AllowAny()]  # Không yêu cầu xác thực cho GET
+            return [AllowAny()] 
         return [permission() for permission in self.permission_classes] 
     
     def get(self, request, pk=None):
@@ -41,7 +44,13 @@ class PostView(APIView):
                 data['registration'] = registration_serializer.data
                 return Response(data)
         else:
-            posts = JobPost.objects.all()
+            if request.user.is_authenticated:
+                user_id = request.user
+                registered_posts = JobRegister.objects.filter(tutor_id=user_id)
+                query = Q(status=Status.APPROVED) & ~Q(post_id__in=[post.post_id.post_id for post in registered_posts])
+                posts = JobPost.objects.filter(query)
+            else:
+                posts = JobPost.objects.all()
             post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
         return Response(post_serializer.data)
     
@@ -137,3 +146,13 @@ class SearchView(APIView):
             if SearchView.remove_accents(text) in SearchView.remove_accents(weekday):
                 return True
         return False
+    
+class AppointView(APIView):
+    permission_classes = [IsAuthenticated, IsParent]
+
+    def post(self, request):
+        appointment_serializer = ClassSerializer(data=request.data)
+        if appointment_serializer.is_valid():
+            appointment_serializer.save()
+            return Response(appointment_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(appointment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

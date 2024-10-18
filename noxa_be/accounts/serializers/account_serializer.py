@@ -163,6 +163,9 @@ class ParentProfileSerializer(serializers.ModelSerializer):
         for field in representation:
             if representation[field] is None:
                 representation[field] = 'Not recorded'
+
+            elif field == 'gender':
+                representation[field] = Gender.map_value_to_display(representation[field])
         
         return representation
 

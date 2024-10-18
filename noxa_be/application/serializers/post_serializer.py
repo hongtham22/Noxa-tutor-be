@@ -110,7 +110,8 @@ class PostSerializer(serializers.ModelSerializer):
         return post
 
     def update(self, instance, validated_data):
-
+        if instance.status == Status.CLOSED:
+            raise serializers.ValidationError("This post has been appointed to another tutor and closed")
         class_times_data = validated_data.pop('class_times')
         instance.subject = validated_data.get('subject', instance.subject)
         instance.address = validated_data.get('address', instance.address)
