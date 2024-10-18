@@ -51,7 +51,7 @@ class PostView(APIView):
                 posts = JobPost.objects.filter(query)
             else:
                 posts = JobPost.objects.all()
-            post_serializer = PostSerializer(posts, many=True, context={'request_type': 'list'})
+            post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
         return Response(post_serializer.data)
     
     def post(self, request):
