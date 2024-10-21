@@ -48,6 +48,11 @@ class ClassSerializer(serializers.ModelSerializer):
         tutor_class = TutorClasses.objects.create(**validated_data)
         job_post = validated_data.get('post_id')
         job_post.status = Status.CLOSED
+
+        class_times = job_post.class_times.all()
+        for class_time in class_times:
+            class_time.class_id = tutor_class
+            class_time.save()
         return tutor_class
     
     def update(self, instance, validated_data):

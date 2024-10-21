@@ -147,12 +147,3 @@ class SearchView(APIView):
                 return True
         return False
     
-class AppointView(APIView):
-    permission_classes = [IsAuthenticated, IsParent]
-
-    def post(self, request):
-        appointment_serializer = ClassSerializer(data=request.data)
-        if appointment_serializer.is_valid():
-            appointment_serializer.save()
-            return Response(appointment_serializer.data, status=status.HTTP_201_CREATED)
-        return Response(appointment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
