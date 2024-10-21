@@ -24,7 +24,11 @@ class TutorPostView(APIView):
                 return Response(post_serializer.data)
         else:
             status = request.query_params.get('status', 'approved')
-            posts = self.helper.get_posts_by_status(request, status)
+            if status == 'registered':
+                user_id = request.user.user_id
+                posts = self.helper.get_registered_posts(user_id)
+            else:
+                posts = self.helper.get_posts_by_status(request, status)
         return self.helper.paginate_posts(posts, request)
     
     def post(self, request):

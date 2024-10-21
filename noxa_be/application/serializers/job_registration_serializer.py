@@ -5,6 +5,7 @@ from accounts.enums import Status
 
 class JobRegistrationSerializer(serializers.ModelSerializer):
     tutor_name = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
     class Meta:
         model = JobRegister
         fields = '__all__'
@@ -13,6 +14,7 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
             'tutor_name': {'read_only': True},
             'post_id': {'write_only': True},
             'tutor_id': {'required': True},
+            'avatar': {'read_only': True}
         }
 
     def to_internal_value(self, data):
@@ -45,3 +47,7 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
     def get_tutor_name(self, obj):
         tutor = TutorProfile.objects.get(user=obj.tutor_id)
         return tutor.tutorname
+
+    def get_avatar(self, obj):
+        tutor = TutorProfile.objects.get(user=obj.tutor_id)
+        return tutor.avatar.url

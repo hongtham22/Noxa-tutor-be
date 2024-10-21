@@ -39,10 +39,10 @@ class PostView(APIView):
                 post_serializer = PostSerializer(post, context={'request_type': 'detail'})
                 job_registerd = JobRegister.objects.filter(post_id=post)
                 registration_serializer = JobRegistrationSerializer(job_registerd, many=True)
-                
-                data = post_serializer.data
-                data['registration'] = registration_serializer.data
-                return Response(data)
+
+            data = post_serializer.data
+            data['registration'] = registration_serializer.data
+            return Response(data)
         else:
             if request.user.is_authenticated:
                 user_id = request.user

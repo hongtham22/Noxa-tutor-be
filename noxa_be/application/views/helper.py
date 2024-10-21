@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from accounts.enums import Status
-from accounts.models import JobPost, User
+from accounts.models import JobPost, JobRegister, User
 from application.serializers.post_serializer import PostSerializer
 from rest_framework.pagination import PageNumberPagination
 
@@ -42,3 +42,9 @@ class PostHelper:
         paginated_posts = paginator.paginate_queryset(posts, request)
         post_serializer = PostSerializer(paginated_posts, many=True, context={'request_type': type})
         return paginator.get_paginated_response(post_serializer.data)
+    
+    def get_registered_posts(self, user_id):
+        user = get_object_or_404(User, user_id=user_id)
+        posts = JobRegister.objects.filter(tutor_id=user)
+        posts = JobPost.objects.filter(post_id__in=[post.post_id.post_id for post in posts])
+        return posts

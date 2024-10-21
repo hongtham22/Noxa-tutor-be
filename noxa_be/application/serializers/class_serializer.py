@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from accounts.models import User, TutorProfile, ParentProfile, JobPost, TutorClasses, Feedback, Notification, TutorSubject, ClassTime
+from accounts.models import JobRegister, User, TutorProfile, ParentProfile, JobPost, TutorClasses, Feedback, Notification, TutorSubject, ClassTime
 
 from accounts.enums import *
 
@@ -48,11 +48,17 @@ class ClassSerializer(serializers.ModelSerializer):
         tutor_class = TutorClasses.objects.create(**validated_data)
         job_post = validated_data.get('post_id')
         job_post.status = Status.CLOSED
+        job_post.save()
 
         class_times = job_post.class_times.all()
         for class_time in class_times:
             class_time.class_id = tutor_class
             class_time.save()
+
+        # delete all in JobRegister
+        job_registers = JobRegister.objects.filter(post_id=job_post.post_id)
+        job_registers.delete()
+
         return tutor_class
     
     def update(self, instance, validated_data):
