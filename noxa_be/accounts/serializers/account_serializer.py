@@ -10,6 +10,12 @@ Base serializer for User model, required when creating TutorProfile or ParentPro
   + read_only: fields that only can convert from model to JSON
   + write_only: fields that only can convert from JSON to model
 """
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -24,6 +30,20 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         print (user)
         return user
+    
+    def change_password(self, instance, validated_data):
+        old_password = validated_data.get('old_password')
+        new_password = validated_data.get('new_password')
+
+        print(f"Old Password: {old_password}")
+        print(f"New Password: {new_password}")
+
+        if not instance.check_password(old_password):
+            raise serializers.ValidationError({"old_password": "Wrong password."})
+
+        instance.set_password(new_password)
+        instance.save()
+        return instance
 
 
 """

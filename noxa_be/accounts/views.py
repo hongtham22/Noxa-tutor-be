@@ -10,7 +10,7 @@ from .permission import IsParent, IsTutor
 
 from .helpers import get_tokens_for_user, token_blacklisted, send_email_verification
 from .models import User, TutorProfile, ParentProfile
-from .serializers.account_serializer import TutorProfileSerializer, ParentProfileSerializer, UserSerializer
+from .serializers.account_serializer import TutorProfileSerializer, ParentProfileSerializer, UserSerializer, ChangePasswordSerializer
 
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
@@ -230,3 +230,16 @@ class ParentView(BaseView):
     serializer = ParentProfileSerializer
     permission_classes = [IsAuthenticated, IsParent]
     
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            user_serializer = UserSerializer()
+
+            user_serializer.change_password(user, serializer.validated_data)
+            return Response({"detail": "Password has been changed."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
