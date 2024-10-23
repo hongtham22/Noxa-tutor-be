@@ -23,5 +23,6 @@ class TutorClassView(APIView):
             return Response(posts_serializer.data)
         elif status == 'appointed':
             classes = TutorClasses.objects.filter(tutor_id__user_id=user_id)
-            class_serializer = ClassSerializer(classes, many=True)
-            return Response(class_serializer.data)
+            posts = [c.post_id for c in classes]
+            posts_serializer = PostSerializer(posts, many=True)
+            return Response(posts_serializer.data)

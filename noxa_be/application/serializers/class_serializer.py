@@ -43,6 +43,11 @@ class ClassSerializer(serializers.ModelSerializer):
         data['tutor_id'] = tutor_profile
         data['post_id'] = job_post
         return data
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['tutor_id'] = instance.tutor_id.user.user_id
+        return representation
 
     def create(self, validated_data):
         tutor_class = TutorClasses.objects.create(**validated_data)

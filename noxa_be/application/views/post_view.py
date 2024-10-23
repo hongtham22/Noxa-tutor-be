@@ -34,6 +34,10 @@ class PostView(APIView):
                 user = get_object_or_404(User, user_id=pk)
                 posts = JobPost.objects.filter(parent_id=user)
                 post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
+                data = post_serializer.data
+                for post in data:
+                    post['class_times'] = ClassSerializer(TutorClasses.objects.filter(post_id__post_id=post['post_id']), many=True).data
+                return Response(data)
             else:
                 post = get_object_or_404(JobPost, post_id=pk)
                 post_serializer = PostSerializer(post, context={'request_type': 'detail'})
@@ -42,6 +46,11 @@ class PostView(APIView):
 
                 data = post_serializer.data
                 data['registration'] = registration_serializer.data
+
+                tutor = TutorClasses.objects.filter(post_id=post)
+                if tutor:
+                    tutor_serializer = ClassSerializer(tutor, many=True)
+                    data['tutor'] = tutor_serializer.data
                 return Response(data)
         else:
             if request.user.is_authenticated:
@@ -52,7 +61,7 @@ class PostView(APIView):
             else:
                 posts = JobPost.objects.all()
             post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
-        return Response(post_serializer.data)
+            return Response(post_serializer.data)
     
     def post(self, request):
         post_serializer = PostSerializer(data=request.data)

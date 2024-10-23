@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .permission import IsParent, IsTutor
+from .permission import IsAdmin, IsAdminOrSpecificRole, IsParent, IsTutor
 
 from .helpers import get_tokens_for_user, token_blacklisted, send_email_verification
 from .models import User, TutorProfile, ParentProfile
@@ -34,6 +34,8 @@ class BaseView(APIView):
     def get_permissions(self):
         if self.request.method == 'GET':
             return [AllowAny()]  # Không yêu cầu xác thực cho GET
+        if self.request.method == 'DELETE':
+            return [IsAuthenticated(), IsAdminOrSpecificRole()]  # Yêu cầu xác thực cho DELETE
         return [permission() for permission in self.permission_classes] 
 
     def get(self, request, pk=None):
