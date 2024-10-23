@@ -39,8 +39,8 @@ class TutorPostView(APIView):
         return Response(registration.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk):
-        registration = get_object_or_404(JobRegister, registation_id=pk)
+        post_id = pk 
+        registration = JobRegister.objects.filter(post_id__post_id=post_id, tutor_id=request.user.user_id)
         registration.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
         
-
