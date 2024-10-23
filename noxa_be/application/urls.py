@@ -5,7 +5,8 @@ from application.views.admin_post_view import AdminPostView
 from application.views.tutor_post_view import TutorPostView
 from application.views.enum_view import EnumView
 from application.views.notification_view import sse_notification
-from application.views.class_view import AppointView, FeedbackView
+from application.views.parent_class_view import AppointView, FeedbackView
+from application.views.tutor_class_view import TutorClassView
 
 urlpatterns = [
     path('posts/', PostView.as_view()),
@@ -19,4 +20,5 @@ urlpatterns = [
     path('search/', SearchView.as_view()),
     path('class/appoint/', AppointView.as_view()),
     path('class/feedback/', FeedbackView.as_view()),
+    path('tutor/class/', TutorClassView.as_view()),
 ]

@@ -40,6 +40,7 @@ class PostSerializer(serializers.ModelSerializer):
     class_times = ClassTimeSerializer(many=True, required=False)
     username = serializers.SerializerMethodField()
     parent_name = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
     class Meta:
         model = JobPost
         fields = '__all__'
@@ -59,6 +60,7 @@ class PostSerializer(serializers.ModelSerializer):
             'background_desired': {'required': False},
             'duration': {'required': False},
             'description': {'required': False},
+            'avatar': {'read_only': True}
         }
 
     def to_representation(self, instance):
@@ -142,3 +144,13 @@ class PostSerializer(serializers.ModelSerializer):
     def get_username(self, obj):
         username = obj.parent_id.username
         return username
+    
+    def get_avatar(self, obj):
+        try:
+            parent = ParentProfile.objects.get(user=obj.parent_id)
+            if parent.avatar:
+                return parent.avatar.url
+            else:
+                return 'No avatar'
+        except:
+            return 'No avatar'
