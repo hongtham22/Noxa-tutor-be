@@ -87,7 +87,7 @@ class JobPost (models.Model):
     address = models.TextField()
 
     def __str__(self):
-        return self.post_id
+        return str(self.post_id)
     
 class JobRegister (models.Model):
     registration_id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
@@ -114,6 +114,7 @@ class Feedback (models.Model):
     tutor_id = models.ForeignKey(TutorProfile, on_delete=models.CASCADE)
     rating = models.FloatField()
     description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
         return self.feedback_id
@@ -146,6 +147,16 @@ class ClassTime (models.Model):
         return self.post_id
     
 
+class Report (models.Model):
+    report_id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)
+    report_type = models.CharField(choices=ReportType.choices, max_length=50)
+    description = models.TextField()
+    post = models.ForeignKey(JobPost, on_delete=models.CASCADE, null=True, blank=True)
+    feedback = models.ForeignKey(Feedback, on_delete=models.CASCADE, null=True, blank=True)
+    reported = models.ForeignKey(User, on_delete=models.CASCADE)
+    reportee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reportee')
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
 
 
 

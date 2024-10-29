@@ -49,6 +49,12 @@ class AdminPostView(APIView):
 
         self.add_notification(post)
         return Response(status=status.HTTP_200_OK)
+    
+    def delete(self, request, pk):
+        post_id = pk
+        post = JobPost.objects.get(post_id=post_id)
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
         
     def add_notification(self, post):
         parent_id = post.parent_id.user_id

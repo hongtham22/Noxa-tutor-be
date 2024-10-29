@@ -36,7 +36,7 @@ class PostView(APIView):
                 post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
                 data = post_serializer.data
                 for post in data:
-                    post['class_times'] = ClassSerializer(TutorClasses.objects.filter(post_id__post_id=post['post_id']), many=True).data
+                    post['class'] = ClassSerializer(TutorClasses.objects.filter(post_id__post_id=post['post_id']), many=True).data
                 return Response(data)
             else:
                 post = get_object_or_404(JobPost, post_id=pk)
@@ -56,7 +56,8 @@ class PostView(APIView):
             if request.user.is_authenticated:
                 user_id = request.user
                 registered_posts = JobRegister.objects.filter(tutor_id=user_id)
-                query = Q(status=Status.APPROVED) & ~Q(post_id__in=[post.post_id.post_id for post in registered_posts])
+                reported_posts = Report.objects.filter(reported=user_id).filter(report_type=ReportType.POST)
+                query = Q(status=Status.APPROVED) & (~Q(post_id__in=[post.post_id.post_id for post in registered_posts]) & ~Q(post_id__in=[report.post.post_id for report in reported_posts]))
                 posts = JobPost.objects.filter(query)
             else:
                 posts = JobPost.objects.all()

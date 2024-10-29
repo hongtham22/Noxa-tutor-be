@@ -62,6 +62,20 @@ class IsAdminOrSpecificRole(BasePermission):
 
         # Nếu không thỏa mãn, từ chối quyền truy cập
         return False
+    
+class IsTutorOrParent(BasePermission):
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        
+        try:
+            role = get_role(request)
+            if role == 'tutor' or role == 'parent':
+                return True
+            else:
+                return False
+        except AuthenticationFailed:
+            return super().has_permission(request, view)
 
 def get_role(request):
     jwt_auth = JWTAuthentication()

@@ -73,3 +73,7 @@ class Weekday(Enum):
     FRIDAY = 'friday', 'Thứ sáu'
     SATURDAY = 'saturday', 'Thứ bảy'
     SUNDAY = 'sunday', 'Chủ nhật'
+
+class ReportType(Enum):
+    FEEDBACK = 'feedback', 'Đánh giá'
+    POST = 'post', 'Bài đăng'

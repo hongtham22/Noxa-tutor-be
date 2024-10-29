@@ -4,6 +4,8 @@ from accounts.models import User, TutorProfile, ParentProfile, JobPost, TutorCla
 from accounts.enums import *
 
 class FeedbackSerializer(serializers.ModelSerializer):
+    parent_name = serializers.SerializerMethodField()
+    parent_avt = serializers.SerializerMethodField()
     class Meta:
         model = Feedback
         fields = '__all__'
@@ -14,6 +16,9 @@ class FeedbackSerializer(serializers.ModelSerializer):
             'tutor_id': {'required': True},
             'rating': {'required': True},
             'description': {'required': False},
+            'created_at': {'read_only': True},
+            'parent_name': {'read_only': True},
+            'parent_avt': {'read_only': True}
         }
 
     def to_internal_value(self, data):
@@ -47,6 +52,28 @@ class FeedbackSerializer(serializers.ModelSerializer):
         data['tutor_id'] = tutor_profile
         return data
     
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        tutor_id = instance.tutor_id.user.user_id
+        parent_id = instance.parent_id.user.user_id
+
+        representation['tutor_id'] = tutor_id
+        representation['parent_id'] = parent_id
+
+        return representation
+    
     def create(self, validated_data):
         feedback = Feedback.objects.create(**validated_data)
         return feedback
+    
+    def get_parent_name(self, obj):
+        parent = obj.parent_id
+        return parent.parentname
+    
+    def get_parent_avt(self, obj):
+        parent = obj.parent_id
+        
+        if parent.avatar:
+            return parent.avatar.url
+        return None
