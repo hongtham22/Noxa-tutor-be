@@ -2,6 +2,7 @@ from django.urls import path
 
 from application.views.post_view import PostView, SearchView
 from application.views.admin_post_view import AdminPostView
+from application.views.statistics_view import StatisticView
 from application.views.tutor_post_view import TutorPostView
 from application.views.enum_view import EnumView
 from application.views.notification_view import sse_notification
@@ -25,4 +26,5 @@ urlpatterns = [
     path('tutor/class/', TutorClassView.as_view()),
     path('report/', ReportView.as_view()),
     path('report/<str:pk>/', ReportView.as_view()),
+    path('statistics/', StatisticView.as_view()),
 ]

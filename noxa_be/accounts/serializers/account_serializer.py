@@ -25,6 +25,15 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        print(validated_data)
+        email = validated_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError({"email": "This email is already taken."})
+        
+        username = validated_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError({"username": "This username is already taken."})
+
         user = User.objects.create_user(**validated_data)
         user.is_active = False
         user.save()
@@ -114,7 +123,9 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         user_data = validated_data.pop('user')
-        user = User.objects.create_user(**user_data)
+        user_serializer = UserSerializer(data=user_data)
+        user_serializer.is_valid(raise_exception=True)
+        user = user_serializer.save()
         user.is_active = False
         user.save()
         tutor_profile = TutorProfile.objects.create(user=user, **validated_data)
