@@ -32,6 +32,11 @@ class FeedbackView(APIView):
 
     def get(self, request, id=None):
         if id:
+            print ('id: ', id)
+            feedback = Feedback.objects.filter(feedback_id=id).first()
+            if feedback:
+                feedback_serializer = FeedbackSerializer(feedback)
+                return Response(feedback_serializer.data)
             feedbacks = Feedback.objects.filter(tutor_id__user__user_id=id)
             feedbacks_serializer = FeedbackSerializer(feedbacks, many=True)
             return Response(feedbacks_serializer.data)

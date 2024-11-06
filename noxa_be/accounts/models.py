@@ -117,7 +117,7 @@ class Feedback (models.Model):
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
-        return self.feedback_id
+        return str(self.feedback_id)
     
 class Notification (models.Model):
     notification_id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)

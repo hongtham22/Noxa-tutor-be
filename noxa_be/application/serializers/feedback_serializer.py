@@ -6,6 +6,8 @@ from accounts.enums import *
 class FeedbackSerializer(serializers.ModelSerializer):
     parent_name = serializers.SerializerMethodField()
     parent_avt = serializers.SerializerMethodField()
+    total_feedback = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
     class Meta:
         model = Feedback
         fields = '__all__'
@@ -18,7 +20,9 @@ class FeedbackSerializer(serializers.ModelSerializer):
             'description': {'required': False},
             'created_at': {'read_only': True},
             'parent_name': {'read_only': True},
-            'parent_avt': {'read_only': True}
+            'parent_avt': {'read_only': True},
+            'total_feedback': {'read_only': True},
+            'average_rating': {'read_only': True},
         }
 
     def to_internal_value(self, data):
@@ -58,8 +62,8 @@ class FeedbackSerializer(serializers.ModelSerializer):
         tutor_id = instance.tutor_id.user.user_id
         parent_id = instance.parent_id.user.user_id
 
-        representation['tutor_id'] = tutor_id
-        representation['parent_id'] = parent_id
+        representation['tutor_id'] = str(tutor_id)
+        representation['parent_id'] = str(parent_id)
 
         return representation
     
@@ -77,3 +81,20 @@ class FeedbackSerializer(serializers.ModelSerializer):
         if parent.avatar:
             return parent.avatar.url
         return None
+    
+    def get_total_feedback(self, obj):
+        tutor_id = obj.tutor_id.user
+        
+        feedbacks = Feedback.objects.filter(tutor_id__user=tutor_id)
+        return feedbacks.count()
+    
+    def get_average_rating(self, obj):
+        tutor_id = obj.tutor_id.user
+        
+        feedbacks = Feedback.objects.filter(tutor_id__user=tutor_id)
+        total = 0
+        for feedback in feedbacks:
+            total += feedback.rating
+        if feedbacks.count() == 0:
+            return 0
+        return total / feedbacks.count()
