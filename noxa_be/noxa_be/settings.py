@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'application',
+    'notifications',
+    'channels',
 ]
 
 REST_FRAMEWORK = {
@@ -88,7 +90,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'noxa_be.wsgi.application'
 
+ASGI_APPLICATION = 'noxa_be.asgi.application'
+
 AUTH_USER_MODEL = 'accounts.User'  
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -160,7 +170,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     # "ROTATE_REFRESH_TOKENS": False,
-    # "BLACKLIST_AFTER_ROTATION": False,
+    # "BLACKLIST_AFTER_ROTATION": False,q
     # "UPDATE_LAST_LOGIN": False,
 
     # "ALGORITHM": "HS256",

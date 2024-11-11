@@ -16,6 +16,8 @@ import unicodedata
 import re
 import time
 
+from notifications.notification_service import NotificationService
+
 
 """
 PostView API endpoint for JobPost model. Use for parent to CRUD their job posts.
@@ -68,6 +70,12 @@ class PostView(APIView):
         post_serializer = PostSerializer(data=request.data)
         if post_serializer.is_valid():
             post_serializer.save()
+
+            admins = User.objects.filter(role=Role.ADMIN)
+            for admin in admins:
+                message = f'{post_serializer.data["parent_id"]} has created a new post'
+                NotificationService.add_notification(admin, message)
+                
             return Response(post_serializer.data, status=status.HTTP_201_CREATED)
         return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

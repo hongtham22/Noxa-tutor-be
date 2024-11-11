@@ -7,7 +7,8 @@ from rest_framework.permissions import AllowAny
 from accounts.permission import IsParent
 from application.serializers.class_serializer import ClassSerializer
 from application.serializers.feedback_serializer import FeedbackSerializer
-from accounts.models import Feedback
+from accounts.models import Feedback, ParentProfile
+from notifications.notification_service import NotificationService
 
 
 
@@ -48,6 +49,12 @@ class FeedbackView(APIView):
         feedback_serializer = FeedbackSerializer(data=request.data)
         if feedback_serializer.is_valid():
             feedback_serializer.save()
+
+            parent = ParentProfile.objects.filter(user__user_id=request.data['parent_id']).first()
+
+            parent_name = parent.parentname if parent.parentname != "" else parent.user.username
+            message = f'You have received a feedback from {parent_name}'
+
+            NotificationService.add_notification(parent, message)
             return Response(feedback_serializer.data, status=status.HTTP_201_CREATED)
-        print(feedback_serializer)
         return Response(feedback_serializer.errors, status=status.HTTP_400_BAD_REQUEST) 

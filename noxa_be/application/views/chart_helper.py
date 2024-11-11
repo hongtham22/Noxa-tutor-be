@@ -60,7 +60,7 @@ class ChartHelper():
 
         tutors_total = User.objects.filter(role=Role.TUTOR).count()
         parents_total = User.objects.filter(role=Role.PARENT).count()   
-        posts_total = JobPost.objects.exclude(status=Status.CLOSED or Status.CANCELLED).count()
+        posts_total = JobPost.objects.exclude(status=Status.CLOSED or Status.REJECTED).count()
         queue = JobPost.objects.filter(status=Status.PENDING_APPROVAL).count()
 
         data['tutors_total'] = tutors_total
