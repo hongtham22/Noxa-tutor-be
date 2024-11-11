@@ -45,7 +45,7 @@ class TutorProfile (models.Model):
         return self.user.user_id
     
     def __str__(self):
-        return self.tutorname
+        return self.user.user_id
 
  
 class ParentProfile (models.Model):
@@ -63,7 +63,7 @@ class ParentProfile (models.Model):
         return self.user_id
     
     def __str__(self):
-        return self.parentname
+        return self.user.user_id
     
 class Certificates (models.Model):
     certificate_id = models.UUIDField(primary_key=True, editable=False, default=uuid.uuid4)

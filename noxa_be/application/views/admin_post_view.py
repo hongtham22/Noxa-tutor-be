@@ -10,6 +10,9 @@ from accounts.permission import IsAdmin
 from accounts.models import *
 from accounts.enums import *
 from application.serializers.post_serializer import PostSerializer 
+from accounts.models import Notification
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 from .helper import PostHelper
 
@@ -23,11 +26,13 @@ AdminPostView API endpoint for JobPost model. Use for admin to view all job post
 
 """
 
+from notifications.notification_service import NotificationService
+
 class AdminPostView(APIView):
     helper = PostHelper()
     permission_classes = [IsAuthenticated, IsAdmin]
 
-    def get (self, request, pk=None):
+    def get(self, request, pk=None):
         if pk:
             if User.objects.filter(user_id=pk).exists():
                 posts = self.helper.get_posts_by_user_id(pk)
@@ -39,7 +44,7 @@ class AdminPostView(APIView):
             posts = self.helper.get_posts_by_status(request, status)
         return self.helper.paginate_posts(posts, request)
             
-    def post (self, request):
+    def post(self, request):
         post_id = request.data.get('post_id')
         post_status = request.data.get('status')
         post_status = Status.map_display_to_value(post_status)
@@ -47,7 +52,8 @@ class AdminPostView(APIView):
         post.status = post_status
         post.save()
 
-        self.add_notification(post)
+        description = f'Your post has been {post.status}'
+        NotificationService.add_notification(post.parent_id, description)
         return Response(status=status.HTTP_200_OK)
     
     def delete(self, request, pk):
@@ -55,24 +61,3 @@ class AdminPostView(APIView):
         post = JobPost.objects.get(post_id=post_id)
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-        
-    def add_notification(self, post):
-        parent_id = post.parent_id.user_id
-
-        notification = Notification()
-        notification.user_id = post.parent_id
-        notification.description = 'Your post has been {}'.format(post.status)
-        notification.read = False 
-        notification.save()
-
-        active_connections = cache.get('active_connections', {})
-
-        message = json.dumps({
-            'message': 'Your post has been {}'.format(post.status),
-            'time': notification.created_at.strftime('%d/%m/%Y , %H:%M:%S'),
-        })
-            
-        if str(parent_id) in active_connections:
-            active_connections[str(parent_id)].append(message)
-
-        cache.set('active_connections', active_connections)

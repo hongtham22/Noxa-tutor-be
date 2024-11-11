@@ -7,6 +7,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from accounts.permission import IsAdmin, IsTutorOrParent
 from application.serializers.report_serializer import ReportSerializer
 from accounts.models import Report, User
+from notifications.notification_service import NotificationService
+from accounts.enums import Role
 
 class ReportView(APIView):
     permisson_classes = [IsAuthenticated, IsTutorOrParent]
@@ -43,8 +45,13 @@ class ReportView(APIView):
         report = ReportSerializer(data=request.data)
         if report.is_valid():
             report.save()
+
+            admins = User.objects.filter(role=Role.ADMIN)
+            for admin in admins:
+                message = f'{report.reported.username} has reported user {report.reportee.username}'
+                NotificationService.add_notification(admin, message)
+
             return Response(report.data, status=status.HTTP_201_CREATED)
-        print (report)
         return Response(report.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def put(self, request):

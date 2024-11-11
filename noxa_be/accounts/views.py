@@ -103,6 +103,9 @@ class LoginView(APIView):
                     serializer = ParentProfileSerializer(parent)
                 elif role == 'admin':
                     serializer = UserSerializer(user)
+                    data = dict(serializer.data)
+                    data['admin_id'] = user.user_id
+                    return Response({'data': data, 'token': token}, status=status.HTTP_200_OK)
                 
                 return Response({'data': serializer.data, 'token': token}, status=status.HTTP_200_OK)
 
