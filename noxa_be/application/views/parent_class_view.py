@@ -36,13 +36,18 @@ class FeedbackView(APIView):
             print ('id: ', id)
             feedback = Feedback.objects.filter(feedback_id=id).first()
             if feedback:
-                feedback_serializer = FeedbackSerializer(feedback)
-                return Response(feedback_serializer.data)
-            feedbacks = Feedback.objects.filter(tutor_id__user__user_id=id)
-            feedbacks_serializer = FeedbackSerializer(feedbacks, many=True)
-            return Response(feedbacks_serializer.data)
+                feedbacks_serializer = FeedbackSerializer(feedback)
+
+            else :
+                feedbacks = Feedback.objects.filter(tutor_id__user__user_id=id)
+                feedbacks_serializer = FeedbackSerializer(feedbacks, many=True, context={'include_average_rating': False})
+            feedbacks = {}
+            feedbacks['feedbacks'] = feedbacks_serializer.data
+            feedbacks['average_rating'] = self.get_average_rating(feedbacks_serializer.data)
+
+            return Response(feedbacks)
         feedbacks = Feedback.objects.all()
-        feedbacks_serializer = FeedbackSerializer(feedbacks, many=True)
+        feedbacks_serializer = FeedbackSerializer(feedbacks, many=True, context={'include_average_rating': True})
         return Response(feedbacks_serializer.data)
 
     def post(self, request):
@@ -58,3 +63,11 @@ class FeedbackView(APIView):
             NotificationService.add_notification(parent, message)
             return Response(feedback_serializer.data, status=status.HTTP_201_CREATED)
         return Response(feedback_serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+    
+    def get_average_rating(self, feedbacks):
+        total = 0
+        for feedback in feedbacks:
+            total += feedback['rating']
+        if len(feedbacks) == 0:
+            return 0
+        return total / len(feedbacks)

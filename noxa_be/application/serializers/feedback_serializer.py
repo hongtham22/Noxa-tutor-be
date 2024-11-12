@@ -8,6 +8,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
     parent_avt = serializers.SerializerMethodField()
     total_feedback = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
+
     class Meta:
         model = Feedback
         fields = '__all__'
@@ -64,6 +65,12 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
         representation['tutor_id'] = str(tutor_id)
         representation['parent_id'] = str(parent_id)
+
+        # Conditionally include average_rating
+        if self.context.get('include_average_rating') == True:
+            representation['average_rating'] = self.get_average_rating(instance)
+        else :
+            representation.pop('average_rating', None)
 
         return representation
     

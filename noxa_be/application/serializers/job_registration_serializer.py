@@ -1,11 +1,13 @@
 from rest_framework import serializers
 
-from accounts.models import JobPost, JobRegister, TutorProfile, User
+from accounts.models import Feedback, JobPost, JobRegister, TutorProfile, User
 from accounts.enums import Status
 
 class JobRegistrationSerializer(serializers.ModelSerializer):
     tutor_name = serializers.SerializerMethodField()
     avatar = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
+    total_feedback = serializers.SerializerMethodField()
     class Meta:
         model = JobRegister
         fields = '__all__'
@@ -14,7 +16,9 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
             'tutor_name': {'read_only': True},
             'post_id': {'write_only': True},
             'tutor_id': {'required': True},
-            'avatar': {'read_only': True}
+            'avatar': {'read_only': True},
+            'average_rating': {'read_only': True},
+            'total_feedback': {'read_only': True},
         }
 
     def to_internal_value(self, data):
@@ -57,3 +61,16 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
                 return 'No avatar'
         except:
             return 'No avatar'
+        
+    def get_average_rating(self, obj):
+        feedbacks = obj.tutor_id.feedback_set.all()
+        total = 0
+        for feedback in feedbacks:
+            total += feedback.rating
+        if feedbacks.count() > 0:
+            return total / feedbacks.count()
+        return 0
+    
+    
+    def get_total_feedback(self, obj):
+        return obj.tutor_id.feedback_set.count()
