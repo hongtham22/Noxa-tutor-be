@@ -12,20 +12,20 @@ class NotificationService:
         notification.read = False
         notification.save()
 
-        message = json.dumps({
+        message = {
             'message': description,
             'time': notification.created_at.strftime('%d/%m/%Y , %H:%M:%S'),
             'notification_id': str(notification.notification_id),
             'read': False
-        })
+        }
 
         channel_layer = get_channel_layer()
         try:
             async_to_sync(channel_layer.group_send)(
-                f'user_{receiver}',
+                f'user_{receiver.user_id}',
                 {
                     'type': 'notify_user',
-                    'message': message
+                    'notification': message
                 }
             )
         except Exception as e:

@@ -70,10 +70,12 @@ User-based serializer
 class TutorProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(required=False)
     tutor_id = serializers.UUIDField(source='user.user_id',read_only=True)
+    average_rating = serializers.SerializerMethodField()
+    total_feedback = serializers.SerializerMethodField()
 
     class Meta:
         model = TutorProfile    
-        fields = ['tutor_id', 'user', 'tutorname', 'address', 'birthdate', 'bio_link', 'phone_number', 'gender', 'educational_background', 'avatar']
+        fields = ['tutor_id', 'user', 'tutorname', 'address', 'birthdate', 'bio_link', 'phone_number', 'gender', 'educational_background', 'avatar',  'average_rating', 'total_feedback']
         extra_kwargs = {
             'description': {'required': False},
             'phone_number': {'required': False},
@@ -85,6 +87,8 @@ class TutorProfileSerializer(serializers.ModelSerializer):
             'bio_link': {'required': False},
             'educational_background': {'required': False},
             'tutor_id': {'read_only': True},
+            'average_rating': {'read_only': True},
+            'total_feedback': {'read_only': True}
         }
 
     def validate(self, data):
@@ -155,6 +159,18 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+    
+    def get_average_rating(self, obj):
+        tutor_feedbacks = obj.feedback_set.all()
+        total = 0
+        for feedback in tutor_feedbacks:
+            total += feedback.rating
+        if len(tutor_feedbacks) == 0:
+            return 0
+        return total / len(tutor_feedbacks)
+    
+    def get_total_feedback(self, obj):
+        return obj.feedback_set.count()
     
 class ParentProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(required=False)

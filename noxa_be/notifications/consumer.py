@@ -31,6 +31,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     await self.send(text_data=json.dumps({"type": "unhandled posts", "posts": unhandled_posts}))
                         
         except Exception as e:
+            
             await self.send(text_data=json.dumps({"type": "error", "message": str(e)}))
 
     async def disconnect(self, close_code):
@@ -41,6 +42,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
         except Exception as e:
+            #print (str(e))
             await self.send(text_data=json.dumps({"type": "error", "message": str(e)}))
 
     async def receive(self, text_data):
@@ -52,6 +54,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 notification_ids = data["notification_ids"]
                 await self.mark_notifications_as_read(user, notification_ids)
         except Exception as e:
+            print ('bla bla bal'+str(e))
             await self.send(text_data=json.dumps({"type": "error", "message": str(e)}))
 
     async def get_unhandled_posts(self):
@@ -64,6 +67,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 )
             return unhandled_posts_list
         except Exception as e:
+            print (str(e))
             await self.send(text_data=json.dumps({"type": "error", "message": str(e)}))
 
     async def notify_user(self, event):
@@ -71,6 +75,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             notification = event["notification"]
             await self.send(text_data=json.dumps({"type": "new_notification", "notification": notification}))
         except Exception as e:
+            print ('notify' + str(e))
             await self.send(text_data=json.dumps({"type": "error", "message": str(e)}))
 
     async def get_unread_notifications(self, user):
