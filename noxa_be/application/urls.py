@@ -9,6 +9,8 @@ from application.views.notification_view import sse_notification
 from application.views.parent_class_view import AppointView, FeedbackView
 from application.views.tutor_class_view import TutorClassView
 from application.views.report_view import ReportView
+from application.views.comment_view import JobPostCommentView
+from application.views.react_view import JobPostReactView
 
 urlpatterns = [
     path('posts/', PostView.as_view()),
@@ -27,4 +29,7 @@ urlpatterns = [
     path('report/', ReportView.as_view()),
     path('report/<str:pk>/', ReportView.as_view()),
     path('statistics/', StatisticView.as_view()),
+    path('postcomments/<str:pk>/', JobPostCommentView.as_view()),
+    path('postcomments/', JobPostCommentView.as_view()),
+    path('postlike/<str:pk>/', JobPostReactView.as_view()),
 ]
