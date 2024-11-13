@@ -49,19 +49,14 @@ class ReportView(APIView):
             admins = User.objects.filter(role=Role.ADMIN)
             for admin in admins:
                 message = f'{report.data["reporter_name"]} has reported user {report.data["reported_party_name"]}'
-                print ('message: ', message)
                 reporter = report.data['reporter_name']
-                print ('reporter: ', reporter)
                 reporter_id = report.data['reporter_id']
-                print ('reporter_id: ', reporter_id)
                 reporter_avatar = report.data['reporter_avt']
-                print ('reporter_avatar: ', reporter_avatar)
                 addtional_information = {
                     'reporter': str(reporter),
                     'reporter_id': str(reporter_id),
                     'reporter_avatar': reporter_avatar,
-                    'post_id': str(report.data['post']),
-                    'feedback_id': str(report.data['feedback_id'])
+                    'report_id': str(report.data['report_id'])
                 }
                 NotificationService.add_notification(admin, message, addtional_information)
 
