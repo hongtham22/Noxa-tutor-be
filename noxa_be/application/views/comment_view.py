@@ -24,12 +24,13 @@ class JobPostCommentView(APIView):
             post = get_object_or_404(JobPost, post_id=pk)
             comments = JobPostComment.objects.filter(post_id=post, comment_parent_id=None).order_by('-created_at')
             comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
-            return Response(comment_serializer.data)
+            total_comments = JobPostComment.objects.filter(post_id=post).count()
+            return Response({'total_comments': total_comments, 'comments': comment_serializer.data})
         elif JobPostComment.objects.filter(comment_id=pk).exists():
             comment = get_object_or_404(JobPostComment, comment_id=pk)
             comments = JobPostComment.objects.filter(comment_parent_id=comment).order_by('created_at')
             comment_serializer = CommentSerializer(comments, many=True, context={'request': request})
-            return Response(comment_serializer.data)
+            return Response({'total_comments': len(comments), 'comments': comment_serializer.data})
         else:
             return Response({'message': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         
