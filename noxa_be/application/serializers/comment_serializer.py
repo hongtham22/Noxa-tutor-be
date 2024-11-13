@@ -33,18 +33,21 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def get_user(self, obj):
         user_role = obj.user_id.role
-        if user_role == 'Tutor':
+        # print(user_role)
+        if user_role == 'tutor':
             try:
                 tutor = TutorProfile.objects.get(user_id=obj.user_id)
                 return {
                     'id': str(obj.user_id.user_id),
-                    'name': tutor.tutorname,
+                    'username': obj.user_id.username,
+                    'tutorname': tutor.tutorname,
                     'avatar': tutor.avatar.url if tutor.avatar else None
                 }
             except:
                 return {
                     'id': str(obj.user_id.user_id),
-                    'name': obj.user_id.username,
+                    'username': obj.user_id.username,
+                    'tutorname': None,
                     'avatar': None
                 }
         else:
@@ -52,14 +55,16 @@ class CommentSerializer(serializers.ModelSerializer):
                 parent = ParentProfile.objects.get(user_id=obj.user_id)
                 return {
                     'id': str(obj.user_id.user_id),
-                    'name': parent.parentname,
+                    'username': obj.user_id.username,
+                    'parentname': parent.parentname,
                     'avatar': parent.avatar.url if parent.avatar else None
 
                 }
             except:
                 return {
                     'id': str(obj.user_id.user_id),
-                    'name': obj.user_id.username,
+                    'username': obj.user_id.username,
+                    'parentname': None,
                     'avatar': None
                 }
     
