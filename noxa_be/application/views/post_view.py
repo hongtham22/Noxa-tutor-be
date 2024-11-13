@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from accounts.permission import IsParent, IsTutor
 from accounts.models import * 
+from application.models import JobPostReact
 from application.serializers.post_serializer import PostSerializer, ClassTimeSerializer
 from application.serializers.job_registration_serializer import JobRegistrationSerializer
 from application.serializers.class_serializer import ClassSerializer
@@ -39,6 +40,8 @@ class PostView(APIView):
                 data = post_serializer.data
                 for post in data:
                     post['class'] = ClassSerializer(TutorClasses.objects.filter(post_id__post_id=post['post_id']), many=True).data
+                    if (request.user.is_authenticated):
+                        post['is_reacted'] = JobPostReact.objects.filter(post_id=post['post_id'], user_id=request.user).exists()
                 return Response(data)
             else:
                 post = get_object_or_404(JobPost, post_id=pk)
@@ -53,6 +56,8 @@ class PostView(APIView):
                 if tutor:
                     tutor_serializer = ClassSerializer(tutor, many=True)
                     data['tutor'] = tutor_serializer.data
+                    if request.user.is_authenticated:
+                        data['is_reacted'] = JobPostReact.objects.filter(post_id=pk, user_id=request.user).exists()
                 return Response(data)
         else:
             if request.user.is_authenticated:
@@ -64,6 +69,10 @@ class PostView(APIView):
             else:
                 posts = JobPost.objects.all()
             post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
+
+            if request.user.is_authenticated:
+                for post in post_serializer.data:
+                    post['is_reacted'] = JobPostReact.objects.filter(post_id=post['post_id'], user_id=request.user).exists()
             return Response(post_serializer.data)
     
     def post(self, request):
@@ -73,13 +82,13 @@ class PostView(APIView):
 
             admins = User.objects.filter(role=Role.ADMIN)
             for admin in admins:
-                message = f'{post_serializer.data["parent_id"]} has created a new post'
+                message = f'{post_serializer.data["parent_name"]} has created a new post'
                 parent_avatar = post_serializer.data['avatar']
                 parent_name = post_serializer.data['parent_name'] or post_serializer.data['username']
                 parent_id = post_serializer.data['parent_id']
                 addtional_information = {
                     'parent_name': parent_name,
-                    'parent_id': parent_id,
+                    'parent_id': str(parent_id),
                     'parent_avatar': parent_avatar,
                     'post_id': str(post_serializer.data['post_id'])
                 }

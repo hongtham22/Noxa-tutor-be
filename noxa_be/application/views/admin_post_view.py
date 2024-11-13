@@ -62,5 +62,7 @@ class AdminPostView(APIView):
     def delete(self, request, pk):
         post_id = pk
         post = JobPost.objects.get(post_id=post_id)
+
+        description = f'Your post has been deleted'
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

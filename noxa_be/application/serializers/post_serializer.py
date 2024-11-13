@@ -41,6 +41,8 @@ class PostSerializer(serializers.ModelSerializer):
     username = serializers.SerializerMethodField()
     parent_name = serializers.SerializerMethodField()
     avatar = serializers.SerializerMethodField()
+    total_reacts = serializers.SerializerMethodField()
+
     class Meta:
         model = JobPost
         fields = '__all__'
@@ -60,7 +62,8 @@ class PostSerializer(serializers.ModelSerializer):
             'background_desired': {'required': False},
             'duration': {'required': False},
             'description': {'required': False},
-            'avatar': {'read_only': True}
+            'avatar': {'read_only': True},
+            'total_reacts': {'read_only': True},
         }
 
     def to_representation(self, instance):
@@ -154,3 +157,6 @@ class PostSerializer(serializers.ModelSerializer):
                 return 'No avatar'
         except:
             return 'No avatar'
+        
+    def get_total_reacts(self, obj):
+        return obj.jobpostreact_set.count()
