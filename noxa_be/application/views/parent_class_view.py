@@ -3,11 +3,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
+from rest_framework.utils.serializer_helpers import ReturnList
 
 from accounts.permission import IsParent
 from application.serializers.class_serializer import ClassSerializer
 from application.serializers.feedback_serializer import FeedbackSerializer
-from accounts.models import Feedback, ParentProfile
+from accounts.models import Feedback, ParentProfile, User
 from notifications.notification_service import NotificationService, ParentProfile
 
 
@@ -42,7 +43,9 @@ class FeedbackView(APIView):
                 feedbacks_serializer = FeedbackSerializer(feedbacks, many=True, context={'include_average_rating': False})
             feedbacks = {}
             feedbacks['feedbacks'] = feedbacks_serializer.data
-            feedbacks['average_rating'] = self.get_average_rating(feedbacks_serializer.data)
+            # if feedbacks_serializer.data is not a OrderedDict, don't include average_rating
+            if type(feedbacks_serializer.data) == ReturnList:
+                feedbacks['average_rating'] = self.get_average_rating(feedbacks_serializer.data)
 
             return Response(feedbacks)
         feedbacks = Feedback.objects.all()
@@ -58,8 +61,13 @@ class FeedbackView(APIView):
 
             parent_name = parent.parentname if parent.parentname != "" else parent.user.username
             message = f'You have received a feedback from {parent_name}'
+            parent_avatar = parent.avatar.url if parent.avatar else None
+            additional_information = {
+                'parent_id': str(parent.user.user_id),
+                'parent_avatar': parent_avatar
+            }
 
-            NotificationService.add_notification(parent, message)
+            NotificationService.add_notification(User.objects.filter(user_id=feedback_serializer.data['tutor_id']).first(), message)
             return Response(feedback_serializer.data, status=status.HTTP_201_CREATED)
         return Response(feedback_serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
     
