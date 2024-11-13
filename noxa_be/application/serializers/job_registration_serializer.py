@@ -63,7 +63,9 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
             return 'No avatar'
         
     def get_average_rating(self, obj):
-        feedbacks = obj.tutor_id.feedback_set.all()
+        user = obj.tutor_id
+        tutor = TutorProfile.objects.get(user=user)
+        feedbacks = tutor.feedback_set.all()
         total = 0
         for feedback in feedbacks:
             total += feedback.rating
@@ -73,4 +75,7 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
     
     
     def get_total_feedback(self, obj):
-        return obj.tutor_id.feedback_set.count()
+        user = obj.tutor_id
+        tutor = TutorProfile.objects.get(user=user)
+        feedbacks = tutor.feedback_set.all()
+        return feedbacks.count()

@@ -125,6 +125,7 @@ class Notification (models.Model):
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
+    data = models.JSONField(blank=True, null=True)
 
     def __str__(self):
         return self.notification_id
