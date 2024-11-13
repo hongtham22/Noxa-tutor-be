@@ -59,7 +59,9 @@ class ReportView(APIView):
                 addtional_information = {
                     'reporter': str(reporter),
                     'reporter_id': str(reporter_id),
-                    'reporter_avatar': reporter_avatar
+                    'reporter_avatar': reporter_avatar,
+                    'post_id': str(report.data['post']),
+                    'feedback_id': str(report.data['feedback_id'])
                 }
                 NotificationService.add_notification(admin, message, addtional_information)
 

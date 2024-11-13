@@ -80,7 +80,8 @@ class PostView(APIView):
                 addtional_information = {
                     'parent_name': parent_name,
                     'parent_id': parent_id,
-                    'parent_avatar': parent_avatar
+                    'parent_avatar': parent_avatar,
+                    'post_id': str(post_serializer.data['post_id'])
                 }
                 NotificationService.add_notification(admin, message, addtional_information)
                 
