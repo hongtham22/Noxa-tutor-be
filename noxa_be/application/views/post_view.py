@@ -74,7 +74,16 @@ class PostView(APIView):
             admins = User.objects.filter(role=Role.ADMIN)
             for admin in admins:
                 message = f'{post_serializer.data["parent_id"]} has created a new post'
-                NotificationService.add_notification(admin, message)
+                parent_avatar = post_serializer.data['avatar']
+                parent_name = post_serializer.data['parent_name'] or post_serializer.data['username']
+                parent_id = post_serializer.data['parent_id']
+                addtional_information = {
+                    'parent_name': parent_name,
+                    'parent_id': parent_id,
+                    'parent_avatar': parent_avatar,
+                    'post_id': str(post_serializer.data['post_id'])
+                }
+                NotificationService.add_notification(admin, message, addtional_information)
                 
             return Response(post_serializer.data, status=status.HTTP_201_CREATED)
         return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

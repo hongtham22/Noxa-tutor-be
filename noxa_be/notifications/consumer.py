@@ -24,11 +24,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             unread_notifications = await self.get_unread_notifications(user)
             if unread_notifications:
                 await self.send(text_data=json.dumps({"type": "unread notifications", "notifications": unread_notifications}))
-
-            if (user.role == Role.ADMIN):
-                unhandled_posts = await self.get_unhandled_posts()
-                if unhandled_posts:
-                    await self.send(text_data=json.dumps({"type": "unhandled posts", "posts": unhandled_posts}))
                         
         except Exception as e:
             
@@ -85,7 +80,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             unread_notifications_list = []
             for n in await sync_to_async(list)(unread_notifications):
                 unread_notifications_list.append(
-                    {"id": str(n.notification_id), "content": n.description, "created_at": str(n.created_at), "is_read": n.read}
+                    n.data
                 )
             return unread_notifications_list
         except Exception as e:

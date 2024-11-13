@@ -161,7 +161,9 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         return instance
     
     def get_average_rating(self, obj):
+        print (obj.user)
         tutor_feedbacks = obj.feedback_set.all()
+        print (tutor_feedbacks)
         total = 0
         for feedback in tutor_feedbacks:
             total += feedback.rating

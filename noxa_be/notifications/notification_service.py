@@ -5,19 +5,24 @@ from accounts.models import Notification, ParentProfile
 
 class NotificationService:
     @staticmethod
-    def add_notification(receiver, description):
+    def add_notification(receiver, description, additional_information = None):
         notification = Notification()
         notification.user_id = receiver  # Assuming user_id is a foreign key
         notification.description = description
         notification.read = False
         notification.save()
 
+        print (str(notification.notification_id))
+
         message = {
             'message': description,
             'time': notification.created_at.strftime('%d/%m/%Y , %H:%M:%S'),
             'notification_id': str(notification.notification_id),
-            'read': False
+            'read': False,
+            'additional_information': additional_information
         }
+        notification.data = message
+        notification.save()
 
         channel_layer = get_channel_layer()
         try:
