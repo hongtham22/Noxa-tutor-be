@@ -53,7 +53,10 @@ class AdminPostView(APIView):
         post.save()
 
         description = f'Your post has been {post.status}'
-        NotificationService.add_notification(post.parent_id, description)
+        additional_information = {
+            'post_id': str(post_id),
+        }
+        NotificationService.add_notification(post.parent_id, description, additional_information)
         return Response(status=status.HTTP_200_OK)
     
     def delete(self, request, pk):

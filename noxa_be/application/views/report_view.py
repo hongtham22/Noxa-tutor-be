@@ -48,8 +48,20 @@ class ReportView(APIView):
 
             admins = User.objects.filter(role=Role.ADMIN)
             for admin in admins:
-                message = f'{report.reported.username} has reported user {report.reportee.username}'
-                NotificationService.add_notification(admin, message)
+                message = f'{report.data["reporter_name"]} has reported user {report.data["reported_party_name"]}'
+                print ('message: ', message)
+                reporter = report.data['reporter_name']
+                print ('reporter: ', reporter)
+                reporter_id = report.data['reporter_id']
+                print ('reporter_id: ', reporter_id)
+                reporter_avatar = report.data['reporter_avt']
+                print ('reporter_avatar: ', reporter_avatar)
+                addtional_information = {
+                    'reporter': str(reporter),
+                    'reporter_id': str(reporter_id),
+                    'reporter_avatar': reporter_avatar
+                }
+                NotificationService.add_notification(admin, message, addtional_information)
 
             return Response(report.data, status=status.HTTP_201_CREATED)
         return Response(report.errors, status=status.HTTP_400_BAD_REQUEST)
