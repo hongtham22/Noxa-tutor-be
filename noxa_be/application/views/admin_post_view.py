@@ -63,6 +63,14 @@ class AdminPostView(APIView):
         post_id = pk
         post = JobPost.objects.get(post_id=post_id)
 
-        description = f'Your post has been deleted'
+        description = f'Bài đăng của bạn đã bị xóa từ phía quản trị viên'
+        post_serializer = PostSerializer(post)
+        
+        data = post_serializer.data
+        data['parent_id'] = str(post.parent_id)
+        additional_information = {
+            'post': data,
+        }
+        NotificationService.add_notification(post.parent_id, description, additional_information)
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

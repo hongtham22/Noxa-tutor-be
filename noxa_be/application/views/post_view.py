@@ -94,6 +94,9 @@ class PostView(APIView):
                 }
                 NotificationService.add_notification(admin, message, addtional_information)
                 
+            mesage = 'Tạo bài đăng thành công, vui lòng chờ duyệt từ quản trị viên'
+            NotificationService.add_notification(request.user, mesage)
+                
             return Response(post_serializer.data, status=status.HTTP_201_CREATED)
         return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
