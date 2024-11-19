@@ -1,0 +1,93 @@
+# # .github/workflows/deploy.yml
+# name: Deploy
+# on:
+#   push:
+#     branches: [ main ]
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v2
+#         with:
+#           python-version: '3.8'  # Thiết lập phiên bản Python
+
+#       - name: Install dependencies
+#         run: |
+#           pip install -r requirements.txt  # Cài đặt các thư viện cần thiết
+
+#       # - name: Deploy to DO
+#       #   uses: appleboy/ssh-action@master
+#       #   with:
+#       #     host: ${{ secrets.DROPLET_IP }}
+#       #     username: deploy
+#       #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+#       #     script: |
+#       #       cd ~/app
+#       #       git pull
+#       #       docker-compose up -d --build
+
+#       - name: Deploy to DigitalOcean
+#         run: |
+#           ssh root@<địa_chỉ_IP> 'cd /path/to/your/project && git pull && pip install -r requirements.txt && python manage.py migrate && systemctl restart gunicorn'
+#         env:
+#           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Sử dụng khóa SSH để truy cập
+
+
+
+
+name: Django CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout code từ repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # 2. Thiết lập Python
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    # 3. Cài đặt dependencies
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # 4. Chạy tests (nếu có)
+    - name: Run tests
+      run: |
+        python manage.py test
+
+    # 5. Deploy lên server
+    - name: Deploy to DigitalOcean
+      env:
+        HOST: ${{ secrets.SERVER_HOST }}
+        USER: ${{ secrets.SERVER_USER }}
+        PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        echo "$PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+        scp -i private_key.pem -r . $USER@$HOST:/path/to/project
+        ssh -i private_key.pem $USER@$HOST << 'EOF'
+          cd /path/to/project
+          source venv/bin/activate
+          pip install -r requirements.txt
+          python manage.py migrate
+          python manage.py collectstatic --noinput
+          systemctl restart gunicorn
+          systemctl restart nginx
+        EOF
