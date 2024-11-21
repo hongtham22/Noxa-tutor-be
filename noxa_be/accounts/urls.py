@@ -17,5 +17,5 @@ urlpatterns = [
     path('reverify-email/', ReverifyEmailView.as_view()),
     path('change-password/', ChangePasswordView.as_view()),
 
-    path('test_deploy/', views.test, name='test_deploy')
+    path('test/', views.test, name='test_deploy')
 ]
