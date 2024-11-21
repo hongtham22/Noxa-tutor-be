@@ -248,3 +248,8 @@ class ChangePasswordView(APIView):
             user_serializer.change_password(user, serializer.validated_data)
             return Response({"detail": "Password has been changed."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+from django.http import HttpResponse    
+def test(request):
+    return HttpResponse("test deploy!")

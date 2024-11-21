@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import ActivateAccountView, AvatarView, ReverifyEmailView, TutorView, ParentView, LoginView, RegisterView, LogoutView, ChangePasswordView
 from rest_framework_simplejwt.views import TokenRefreshView
+from . import views
 
 urlpatterns = [
     path('tutors/', TutorView.as_view()),
@@ -15,4 +16,6 @@ urlpatterns = [
     path('verify-email/', ActivateAccountView.as_view()),
     path('reverify-email/', ReverifyEmailView.as_view()),
     path('change-password/', ChangePasswordView.as_view()),
+
+    path('test_deploy', views.test, name='test_deploy')
 ]
