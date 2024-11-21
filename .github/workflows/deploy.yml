@@ -41,12 +41,6 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.13'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r noxa_be/requirements.txt
-
     
     - name: SSH to server and deploy
       uses: appleboy/ssh-action@v1.0.0
@@ -55,8 +49,9 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd Noxa-tutor-be/noxa-be
+          cd Noxa-tutor-be
           git pull origin deploy
+          cd noxa_be
           source venv/bin/activate  # Nếu sử dụng virtualenv
           pip install -r requirements.txt
           python manage.py migrate
