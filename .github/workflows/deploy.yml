@@ -49,16 +49,16 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd Noxa-tutor-be
+          cd scrum/Noxa-tutor-be
           git checkout deploy
-          git reset --hard
+          # git reset --hard
           git pull origin deploy
           cd noxa_be
           source venv/bin/activate  # Nếu sử dụng virtualenv
           pip install -r requirements.txt
           python manage.py migrate
           python manage.py collectstatic --noinput
-          sudo systemctl restart scrum.service
+          sudo systemctl restart scrum2.service
           sudo systemctl restart nginx
           # systemctl restart gunicorn
           # systemctl restart nginx
