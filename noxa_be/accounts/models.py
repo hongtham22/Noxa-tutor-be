@@ -154,6 +154,7 @@ class Report (models.Model):
     description = models.TextField()
     post = models.ForeignKey(JobPost, on_delete=models.CASCADE, null=True, blank=True)
     feedback = models.ForeignKey(Feedback, on_delete=models.CASCADE, null=True, blank=True)
+    comment = models.ForeignKey('application.JobPostComment', on_delete=models.CASCADE, null=True, blank=True)
     reported = models.ForeignKey(User, on_delete=models.CASCADE)
     reportee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reportee')
     created_at = models.DateTimeField(auto_now_add=True)

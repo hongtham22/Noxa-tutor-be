@@ -1,5 +1,7 @@
 from urllib.parse import parse_qs
+
 from channels.middleware import BaseMiddleware
+
 from django.contrib.auth.models import AnonymousUser
 from django.db import close_old_connections
 from accounts.models import User  # replace with your actual user model path
@@ -31,7 +33,7 @@ class UserIDMiddleware(BaseMiddleware):
         close_old_connections()
 
         # Continue with the WebSocket connection
-        await super().__call__(scope, receive, send)
+        return await super().__call__(scope, receive, send)
 
     async def get_user_by_id(self, user_id):
         # Fetch user by ID asynchronously

@@ -96,11 +96,22 @@ ASGI_APPLICATION = 'noxa_be.asgi.application'
 
 AUTH_USER_MODEL = 'accounts.User'  
 
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             'hosts': [('127.0.0.1', 6379)],  # Replace with your Redis host and port
+#         },
+#     },
+# }
+
+# normal layer for testing 
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    },
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
 }
+ 
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -155,7 +166,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 

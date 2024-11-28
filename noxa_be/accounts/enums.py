@@ -77,3 +77,4 @@ class Weekday(Enum):
 class ReportType(Enum):
     FEEDBACK = 'feedback', 'Đánh giá'
     POST = 'post', 'Bài đăng'
+    COMMENT = 'comment', 'Bình luận'

@@ -1,7 +1,7 @@
 from django.urls import path
 
 from application.views.post_view import PostView, SearchView
-from application.views.admin_post_view import AdminPostView
+from application.views.admin_post_view import AdminCommentView, AdminPostView
 from application.views.statistics_view import StatisticView
 from application.views.tutor_post_view import TutorPostView
 from application.views.enum_view import EnumView
@@ -32,4 +32,5 @@ urlpatterns = [
     path('postcomments/<str:pk>/', JobPostCommentView.as_view()),
     path('postcomments/', JobPostCommentView.as_view()),
     path('postlike/<str:pk>/', JobPostReactView.as_view()),
+    path('admin/report-comment/<str:pk>/', AdminCommentView.as_view()),
 ]

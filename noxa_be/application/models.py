@@ -1,6 +1,8 @@
 from django.db import models
 import uuid
-from accounts.models import *
+
+from accounts.models import JobPost, User
+
 
 # Create your models here.
 class JobPostComment(models.Model):

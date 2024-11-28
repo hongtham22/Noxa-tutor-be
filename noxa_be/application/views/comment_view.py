@@ -8,6 +8,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
+from accounts.permission import IsAdmin
+
 class JobPostCommentView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -15,6 +17,9 @@ class JobPostCommentView(APIView):
         # Cho phép mọi người truy cập GET, nhưng yêu cầu xác thực cho các phương thức khác
         if self.request.method == "GET":
             return [AllowAny()]
+        
+        if self.request.method == "DELETE":
+            return [IsAuthenticated(), IsAdmin()]
 
         return [permission() for permission in self.permission_classes]
     
@@ -41,3 +46,4 @@ class JobPostCommentView(APIView):
             comment_serializer.save()
             return Response(comment_serializer.data, status=status.HTTP_201_CREATED)
         return Response(comment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from accounts.models import *
 from accounts.enums import *
+from application.models import JobPostComment
 
 class ReportSerializer(serializers.ModelSerializer):
     reported_name = serializers.SerializerMethodField()
@@ -14,6 +15,7 @@ class ReportSerializer(serializers.ModelSerializer):
             'report_id': {'read_only': True},
             'post': {'required': False},
             'feedback_id': {'required': False},
+            'comment' : {'required': False},
             'reported': {'required': True},
             'reportee': {'required': True},
             'description': {'required': True},
@@ -30,6 +32,7 @@ class ReportSerializer(serializers.ModelSerializer):
 
         post = data.get('post_id', None)
         feedback = data.get('feedback_id', None)
+        comment = data.get('comment_id', None)
         reported = data.get('reporter_id', None)
         reportee = data.get('reported_party_id', None)  
         report_type = data.get('type', None)
@@ -37,8 +40,8 @@ class ReportSerializer(serializers.ModelSerializer):
         if not reported or not reportee:
             raise serializers.ValidationError("Reporter ID or Reported Party ID is required")
 
-        if not post and not feedback:
-            raise serializers.ValidationError("Post ID or Feedback ID is required")
+        if not post and not feedback and not comment:
+            raise serializers.ValidationError("Post ID, Feedback ID or Report Id is required")
         
         if not report_type:
             raise serializers.ValidationError("Report type is required")
@@ -63,6 +66,11 @@ class ReportSerializer(serializers.ModelSerializer):
             feedback = Feedback.objects.filter(feedback_id=feedback).first()
             if not feedback:
                 raise serializers.ValidationError("Feedback does not exist")
+            
+        if comment:
+            comment = JobPostComment.objects.filter(comment_id=comment).first()
+            if not comment:
+                raise serializers.ValidationError("Comment does not exist")
         
         report_type = ReportType.map_display_to_value(report_type)
             
@@ -73,6 +81,7 @@ class ReportSerializer(serializers.ModelSerializer):
         data['reportee'] = reportee
         data['post'] = post
         data['feedback'] = feedback
+        data['comment'] = comment
         data['report_type'] = report_type
 
         return data
@@ -84,6 +93,7 @@ class ReportSerializer(serializers.ModelSerializer):
         representation['type'] = ReportType.map_value_to_display(instance.report_type)
         representation['post_id'] = instance.post.post_id if instance.post else None
         representation['feedback_id'] = instance.feedback.feedback_id if instance.feedback else None
+        representation['comment_id'] = str(instance.comment.comment_id) if instance.comment else None
         representation['reporter_name'] = representation['reported_name']
         representation['reported_party_name'] = representation['reportee_name']
         representation['reporter_avt'] = representation['reported_avt']
@@ -93,6 +103,7 @@ class ReportSerializer(serializers.ModelSerializer):
         representation.pop('report_type')
         representation.pop('post')
         representation.pop('feedback')
+        representation.pop('comment')
         representation.pop('reported_name')
         representation.pop('reportee_name')
         representation.pop('reported_avt')
@@ -105,12 +116,14 @@ class ReportSerializer(serializers.ModelSerializer):
         reportee = validated_data.get('reportee')
         post = validated_data.get('post')
         feedback = validated_data.get('feedback')
-        
-        if post or feedback:
-            if post:
+        comment = validated_data.get('comment')
+        if post or feedback or comment:
+            if post and not comment:
                 report = Report.objects.filter(reported=reported, reportee=reportee, post=post).first()
-            else:
+            elif feedback:
                 report = Report.objects.filter(reported=reported, reportee=reportee, feedback=feedback).first()
+            else:
+                report = Report.objects.filter(reported=reported, reportee=reportee, comment=comment).first()
             if report:
                 raise serializers.ValidationError("This report is already exist")
 
