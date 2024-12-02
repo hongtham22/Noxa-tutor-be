@@ -12,6 +12,7 @@ class JobPostComment(models.Model):
     comment_parent_id = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
     comment = models.CharField(max_length=1000)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.comment)
