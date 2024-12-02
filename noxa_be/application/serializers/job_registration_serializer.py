@@ -1,5 +1,4 @@
 from rest_framework import serializers
-
 from accounts.models import Feedback, JobPost, JobRegister, TutorProfile, User
 from accounts.enums import Status
 
@@ -8,6 +7,7 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     average_rating = serializers.SerializerMethodField()
     total_feedback = serializers.SerializerMethodField()
+
     class Meta:
         model = JobRegister
         fields = '__all__'
@@ -22,35 +22,41 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
         }
 
     def to_internal_value(self, data):
-        data = data.copy()
+        try:
+            data = data.copy()
 
-        post_id = data.get('post_id')
-        tutor_id = data.get('tutor_id')
+            post_id = data.get('post_id')
+            tutor_id = data.get('tutor_id')
 
-        if post_id:
-            post = JobPost.objects.get(post_id=post_id)
-            if not post:
-                raise serializers.ValidationError({"post_id": "Post not found"})
-        if tutor_id:
-            tutor = User.objects.get(user_id=tutor_id)
-            tutor_profile = TutorProfile.objects.filter(user=tutor).exists()
-            if not tutor_profile:
-                raise serializers.ValidationError({"tutor_id": "Tutor not found"})
+            if post_id:
+                post = JobPost.objects.get(post_id=post_id)
+                if not post:
+                    raise serializers.ValidationError({"post_id": "Post not found"})
+            if tutor_id:
+                tutor = User.objects.get(user_id=tutor_id)
+                tutor_profile = TutorProfile.objects.filter(user=tutor).exists()
+                if not tutor_profile:
+                    raise serializers.ValidationError({"tutor_id": "Tutor not found"})
             
-        # check if post hasn't been approved
-        if post.status != Status.APPROVED:
-            raise serializers.ValidationError({"post_id": "This post is not approved by admin"})
+            # check if post hasn't been approved
+            if post.status != Status.APPROVED:
+                raise serializers.ValidationError({"post_id": "This post is not approved by admin"})
             
-        if JobRegister.objects.filter(post_id=post_id, tutor_id=tutor_id).exists():
-            raise serializers.ValidationError({"tutor_id": "Tutor had registered this class"})
+            if JobRegister.objects.filter(post_id=post_id, tutor_id=tutor_id).exists():
+                raise serializers.ValidationError({"tutor_id": "Tutor had registered this class"})
 
-        data['post_id'] = post
-        data['tutor_id'] = tutor
-        return data
+            data['post_id'] = post
+            data['tutor_id'] = tutor
+            return data
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in to_internal_value: {str(e)}")
         
     def get_tutor_name(self, obj):
-        tutor = TutorProfile.objects.get(user=obj.tutor_id)
-        return tutor.tutorname
+        try:
+            tutor = TutorProfile.objects.get(user=obj.tutor_id)
+            return tutor.tutorname if tutor.tutorname else tutor.user.username
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in get_tutor_name: {str(e)}")
 
     def get_avatar(self, obj):
         try:
@@ -59,23 +65,28 @@ class JobRegistrationSerializer(serializers.ModelSerializer):
                 return tutor.avatar.url
             else:
                 return 'No avatar'
-        except:
-            return 'No avatar'
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in get_avatar: {str(e)}")
         
     def get_average_rating(self, obj):
-        user = obj.tutor_id
-        tutor = TutorProfile.objects.get(user=user)
-        feedbacks = tutor.feedback_set.all()
-        total = 0
-        for feedback in feedbacks:
-            total += feedback.rating
-        if feedbacks.count() > 0:
-            return total / feedbacks.count()
-        return 0
-    
+        try:
+            user = obj.tutor_id
+            tutor = TutorProfile.objects.get(user=user)
+            feedbacks = tutor.feedback_set.all()
+            total = 0
+            for feedback in feedbacks:
+                total += feedback.rating
+            if feedbacks.count() > 0:
+                return total / feedbacks.count()
+            return 0
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in get_average_rating: {str(e)}")
     
     def get_total_feedback(self, obj):
-        user = obj.tutor_id
-        tutor = TutorProfile.objects.get(user=user)
-        feedbacks = tutor.feedback_set.all()
-        return feedbacks.count()
+        try:
+            user = obj.tutor_id
+            tutor = TutorProfile.objects.get(user=user)
+            feedbacks = tutor.feedback_set.all()
+            return feedbacks.count()
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in get_total_feedback: {str(e)}")
