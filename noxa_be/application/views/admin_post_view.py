@@ -112,5 +112,6 @@ class AdminCommentView(APIView):
     def delete(self, request, pk):
         comment = get_object_or_404(JobPostComment, comment_id=pk)
         comment.comment = 'Bình luận này đã bị xóa do vi phạm tiêu chuẩn cộng đồng'
+        comment.is_deleted = True
         comment.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
