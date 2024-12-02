@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from .permission import IsAdmin, IsAdminOrSpecificRole, IsParent, IsTutor
 
-from .helpers import get_tokens_for_user, token_blacklisted, send_email_verification
+from .helpers import get_tokens_for_user, send_password_reset_email, token_blacklisted, send_email_verification
 from .models import User, TutorProfile, ParentProfile
 from .serializers.account_serializer import TutorProfileSerializer, ParentProfileSerializer, UserSerializer, ChangePasswordSerializer
 
@@ -248,3 +248,18 @@ class ChangePasswordView(APIView):
             user_serializer.change_password(user, serializer.validated_data)
             return Response({"detail": "Password has been changed."}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ForgotPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email', None)
+        if email is None:
+            return Response({'message': 'Email must be provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+            send_password_reset_email(user, request)
+            return Response({'message': 'Temporary password is sent to your password'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
