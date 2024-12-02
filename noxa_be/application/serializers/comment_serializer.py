@@ -19,6 +19,7 @@ class CommentSerializer(serializers.ModelSerializer):
             'user',
             'comment_children_count', 
             'is_my_comment',
+            'is_deleted'
         ]
         extra_kwargs = {
             'comment_id': {'read_only': True},
@@ -29,7 +30,10 @@ class CommentSerializer(serializers.ModelSerializer):
         }
     
     def create(self, validated_data):
-        return super().create(validated_data)
+        try:
+            return super().create(validated_data)
+        except Exception as e:
+            raise serializers.ValidationError({'error': str(e)})
 
     def get_user(self, obj):
         user_role = obj.user_id.role
