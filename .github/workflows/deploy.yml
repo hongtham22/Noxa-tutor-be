@@ -52,7 +52,7 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd var/www/Noxa-tutor-be
+          cd /var/www/Noxa-tutor-be
           git checkout deploy
           git pull origin deploy
           cd noxa_be
