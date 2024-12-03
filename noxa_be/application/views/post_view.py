@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import serializers
 
 from accounts.permission import IsParent, IsTutor
 from accounts.models import * 
@@ -18,6 +19,7 @@ import re
 import time
 
 from notifications.notification_service import NotificationService
+import traceback
 
 
 """
@@ -26,143 +28,173 @@ PostView API endpoint for JobPost model. Use for parent to CRUD their job posts.
 
 class PostView(APIView):
     permission_classes = [IsAuthenticated, IsParent]
+    
     def get_permissions(self):
         if self.request.method == 'GET':
             return [AllowAny()] 
         return [permission() for permission in self.permission_classes] 
     
     def get(self, request, pk=None):
-        if pk:
-            if User.objects.filter(user_id=pk).exists():
-                user = get_object_or_404(User, user_id=pk)
-                posts = JobPost.objects.filter(parent_id=user)
+        try:
+            if pk:
+                if User.objects.filter(user_id=pk).exists():
+                    user = get_object_or_404(User, user_id=pk)
+                    posts = JobPost.objects.filter(parent_id=user)
+                    post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
+                    data = post_serializer.data
+                    for post in data:
+                        post['class'] = ClassSerializer(TutorClasses.objects.filter(post_id__post_id=post['post_id']), many=True).data
+                        if request.user.is_authenticated:
+                            post['is_reacted'] = JobPostReact.objects.filter(post_id=post['post_id'], user_id=request.user).exists()
+                    return Response(data)
+                else:
+                    post = get_object_or_404(JobPost, post_id=pk)
+                    post_serializer = PostSerializer(post, context={'request_type': 'detail'})
+                    job_registerd = JobRegister.objects.filter(post_id=post)
+                    registration_serializer = JobRegistrationSerializer(job_registerd, many=True)
+
+                    data = post_serializer.data
+                    data['registration'] = registration_serializer.data
+
+                    tutor = TutorClasses.objects.filter(post_id=post)
+                    if tutor:
+                        tutor_serializer = ClassSerializer(tutor, many=True)
+                        data['tutor'] = tutor_serializer.data
+                        if request.user.is_authenticated:
+                            data['is_reacted'] = JobPostReact.objects.filter(post_id=pk, user_id=request.user).exists()
+                    return Response(data)
+            else:
+                if request.user.is_authenticated:
+                    user_id = request.user
+                    registered_posts = JobRegister.objects.filter(tutor_id=user_id)
+                    reported_posts = Report.objects.filter(reported=user_id).filter(report_type=ReportType.POST)
+                    query = Q(status=Status.APPROVED) & (~Q(post_id__in=[post.post_id.post_id for post in registered_posts]) & ~Q(post_id__in=[report.post.post_id for report in reported_posts]))
+                    posts = JobPost.objects.filter(query)
+                else:
+                    posts = JobPost.objects.all()
                 post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
-                data = post_serializer.data
-                for post in data:
-                    post['class'] = ClassSerializer(TutorClasses.objects.filter(post_id__post_id=post['post_id']), many=True).data
-                    if (request.user.is_authenticated):
+
+                if request.user.is_authenticated:
+                    for post in post_serializer.data:
                         post['is_reacted'] = JobPostReact.objects.filter(post_id=post['post_id'], user_id=request.user).exists()
-                return Response(data)
-            else:
-                post = get_object_or_404(JobPost, post_id=pk)
-                post_serializer = PostSerializer(post, context={'request_type': 'detail'})
-                job_registerd = JobRegister.objects.filter(post_id=post)
-                registration_serializer = JobRegistrationSerializer(job_registerd, many=True)
-
-                data = post_serializer.data
-                data['registration'] = registration_serializer.data
-
-                tutor = TutorClasses.objects.filter(post_id=post)
-                if tutor:
-                    tutor_serializer = ClassSerializer(tutor, many=True)
-                    data['tutor'] = tutor_serializer.data
-                    if request.user.is_authenticated:
-                        data['is_reacted'] = JobPostReact.objects.filter(post_id=pk, user_id=request.user).exists()
-                return Response(data)
-        else:
-            if request.user.is_authenticated:
-                user_id = request.user
-                registered_posts = JobRegister.objects.filter(tutor_id=user_id)
-                reported_posts = Report.objects.filter(reported=user_id).filter(report_type=ReportType.POST)
-                query = Q(status=Status.APPROVED) & (~Q(post_id__in=[post.post_id.post_id for post in registered_posts]) & ~Q(post_id__in=[report.post.post_id for report in reported_posts]))
-                posts = JobPost.objects.filter(query)
-            else:
-                posts = JobPost.objects.all()
-            post_serializer = PostSerializer(posts, many=True, context={'request_type': 'detail'})
-
-            if request.user.is_authenticated:
-                for post in post_serializer.data:
-                    post['is_reacted'] = JobPostReact.objects.filter(post_id=post['post_id'], user_id=request.user).exists()
-            return Response(post_serializer.data)
+                return Response(post_serializer.data)
+        except serializers.ValidationError as e:
+            print(f"Error in GET /post: {e}")
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error in GET /post: {e}")
+            return Response({'message': 'Some bad things happened on the server'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request):
-        post_serializer = PostSerializer(data=request.data)
-        if post_serializer.is_valid():
-            post_serializer.save()
+        try:
+            post_serializer = PostSerializer(data=request.data)
+            if post_serializer.is_valid():
+                post_serializer.save()
 
-            admins = User.objects.filter(role=Role.ADMIN)
-            for admin in admins:
-                message = f'{post_serializer.data["parent_name"]} has created a new post'
-                parent_avatar = post_serializer.data['avatar']
-                parent_name = post_serializer.data['parent_name'] or post_serializer.data['username']
-                parent_id = post_serializer.data['parent_id']
-                addtional_information = {
-                    'parent_name': parent_name,
-                    'parent_id': str(parent_id),
-                    'parent_avatar': parent_avatar,
-                    'post_id': str(post_serializer.data['post_id'])
-                }
-                NotificationService.add_notification(admin, message, addtional_information)
-                
-            mesage = 'Tạo bài đăng thành công, vui lòng chờ duyệt từ quản trị viên'
-            NotificationService.add_notification(request.user, mesage)
-                
-            return Response(post_serializer.data, status=status.HTTP_201_CREATED)
-        return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                admins = User.objects.filter(role=Role.ADMIN)
+                for admin in admins:
+                    message = f'{post_serializer.data["parent_name"]} has created a new post'
+                    parent_avatar = post_serializer.data['avatar']
+                    parent_name = post_serializer.data['parent_name'] or post_serializer.data['username']
+                    parent_id = post_serializer.data['parent_id']
+                    addtional_information = {
+                        'parent_name': parent_name,
+                        'parent_id': str(parent_id),
+                        'parent_avatar': parent_avatar,
+                        'post_id': str(post_serializer.data['post_id'])
+                    }
+                    NotificationService.add_notification(admin, message, addtional_information)
+                    
+                mesage = 'Tạo bài đăng thành công, vui lòng chờ duyệt từ quản trị viên'
+                NotificationService.add_notification(request.user, mesage)
+                    
+                return Response(post_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error in POST /post: {e}")
+            traceback.print_exc()
+            # print stacktrace
+            return Response({'message': 'Some bad things happened on the server'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def put(self, request, pk):
-        post = get_object_or_404(JobPost, post_id=pk)
-        post_serializer = PostSerializer(post, data=request.data)
-        if post_serializer.is_valid():
-            post_serializer.save()
-            return Response(post_serializer.data)
-        return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            post = get_object_or_404(JobPost, post_id=pk)
+            post_serializer = PostSerializer(post, data=request.data)
+            if post_serializer.is_valid():
+                post_serializer.save()
+                return Response(post_serializer.data)
+            return Response(post_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as e:
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error in PUT /post/{pk}: {e}")
+            return Response({'message': 'Some bad things happened on the server'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def delete(self, request, pk):
-        post = get_object_or_404(JobPost, post_id=pk)
-        post.delete()
+        try:
+            post = get_object_or_404(JobPost, post_id=pk)
+            post.delete()
 
-        # check deleted in class_time
-        class_times = ClassTime.objects.filter(post_id=pk)
-        if not class_times:
-            print ('Logic works perfectly')
-        for class_time in class_times:
-            class_time.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            # check deleted in class_time
+            class_times = ClassTime.objects.filter(post_id=pk)
+            if not class_times:
+                print('Logic works perfectly')
+            for class_time in class_times:
+                class_time.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            print(f"Error in DELETE /post/{pk}: {e}")
+            return Response({'message': 'Some bad things happened on the server'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SearchView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        start_time = time.time()
-        params = {key.strip(): value for key, value in request.query_params.items()}
-        text = params.get('text').strip()
-        if not text:
-            text = request.data.get('text')
-            print ('Text in request data: ', text)
-        posts = JobPost.objects.all()
-        posts_serializer = PostSerializer(posts, many=True)
-        result = []
+        try:
+            start_time = time.time()
+            params = {key.strip(): value for key, value in request.query_params.items()}
+            text = params.get('text').strip()
+            if not text:
+                text = request.data.get('text')
+                print('Text in request data: ', text)
+            posts = JobPost.objects.all()
+            posts_serializer = PostSerializer(posts, many=True)
+            result = []
 
-        def matches_text(field_value):
-            return self.remove_accents(text) in self.remove_accents(field_value)
-        
-        for post in posts_serializer.data:
-            if any((
-                matches_text(post['subject']),
-                matches_text(post['grade']),
-                matches_text(post['background_desired']),
-                matches_text(post['session_per_week']),
-                matches_text(post['wage_per_session']),
-                matches_text(post['student_number']),
-                matches_text(post['description']),
-                matches_text(post['address']),
-                self.search_in_profile(text, post)
-            )):
-                result.append(post)
-                continue
-
-            for class_time in post['class_times']:
+            def matches_text(field_value):
+                return self.remove_accents(text) in self.remove_accents(field_value)
+            
+            for post in posts_serializer.data:
                 if any((
-                    self.search_in_weekday(text, post),
-                    matches_text(class_time['time_start']),
-                    matches_text(class_time['time_end'])
+                    matches_text(post['subject']),
+                    matches_text(post['grade']),
+                    matches_text(post['background_desired']),
+                    matches_text(post['session_per_week']),
+                    matches_text(post['wage_per_session']),
+                    matches_text(post['student_number']),
+                    matches_text(post['description']),
+                    matches_text(post['address']),
+                    self.search_in_profile(text, post)
                 )):
                     result.append(post)
-                    break
+                    continue
 
-        print('time: ', time.time() - start_time)
-        return Response(result)
+                for class_time in post['class_times']:
+                    if any((
+                        self.search_in_weekday(text, post),
+                        matches_text(class_time['time_start']),
+                        matches_text(class_time['time_end'])
+                    )):
+                        result.append(post)
+                        break
+
+            print('time: ', time.time() - start_time)
+            return Response(result)
+        except Exception as e:
+            print(f"Error in GET /search: {e}")
+            return Response({'message': 'Some bad things happened on the server'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @staticmethod
     def remove_accents(text):
@@ -185,4 +217,3 @@ class SearchView(APIView):
             if SearchView.remove_accents(text) in SearchView.remove_accents(weekday):
                 return True
         return False
-    

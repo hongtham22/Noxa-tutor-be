@@ -8,6 +8,7 @@ class ReportSerializer(serializers.ModelSerializer):
     reportee_name = serializers.SerializerMethodField()
     reported_avt = serializers.SerializerMethodField()
     reportee_avt = serializers.SerializerMethodField()
+    
     class Meta:
         model = Report
         fields = '__all__'
@@ -87,31 +88,34 @@ class ReportSerializer(serializers.ModelSerializer):
         return data
     
     def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['reporter_id'] = instance.reported.user_id
-        representation['reported_party_id'] = instance.reportee.user_id
-        representation['type'] = ReportType.map_value_to_display(instance.report_type)
-        representation['post_id'] = instance.post.post_id if instance.post else None
-        representation['feedback_id'] = instance.feedback.feedback_id if instance.feedback else None
-        representation['comment_id'] = str(instance.comment.comment_id) if instance.comment else None
-        representation['reporter_name'] = representation['reported_name']
-        representation['reported_party_name'] = representation['reportee_name']
-        representation['reporter_avt'] = representation['reported_avt']
-        representation['reported_party_avt'] = representation['reportee_avt']
-        representation.pop('reported')
-        representation.pop('reportee')
-        representation.pop('report_type')
-        representation.pop('post')
-        representation.pop('feedback')
-        representation.pop('comment')
-        representation.pop('reported_name')
-        representation.pop('reportee_name')
-        representation.pop('reported_avt')
-        representation.pop('reportee_avt')
-        return representation
+        try:
+            representation = super().to_representation(instance)
+            representation['reporter_id'] = instance.reported.user_id
+            representation['reported_party_id'] = instance.reportee.user_id
+            representation['type'] = ReportType.map_value_to_display(instance.report_type)
+            representation['post_id'] = instance.post.post_id if instance.post else None
+            representation['feedback_id'] = instance.feedback.feedback_id if instance.feedback else None
+            representation['comment_id'] = str(instance.comment.comment_id) if instance.comment else None
+            representation['reporter_name'] = representation['reported_name']
+            representation['reported_party_name'] = representation['reportee_name']
+            representation['reporter_avt'] = representation['reported_avt']
+            representation['reported_party_avt'] = representation['reportee_avt']
+            representation.pop('reported')
+            representation.pop('reportee')
+            representation.pop('report_type')
+            representation.pop('post')
+            representation.pop('feedback')
+            representation.pop('comment')
+            representation.pop('reported_name')
+            representation.pop('reportee_name')
+            representation.pop('reported_avt')
+            representation.pop('reportee_avt')
+            return representation
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in to_representation: {str(e)}")
     
     def create(self, validated_data):
-        # check if the report is already exist
+        # check if the report already exists
         reported = validated_data.get('reported')
         reportee = validated_data.get('reportee')
         post = validated_data.get('post')
@@ -125,68 +129,78 @@ class ReportSerializer(serializers.ModelSerializer):
             else:
                 report = Report.objects.filter(reported=reported, reportee=reportee, comment=comment).first()
             if report:
-                raise serializers.ValidationError("This report is already exist")
+                raise serializers.ValidationError("This report already exists")
 
         report = Report.objects.create(**validated_data)
         return report
 
     def get_reported_name(self, obj):
-        user = obj.reported
-        name = user.username
+        try:
+            user = obj.reported
+            name = user.username
 
-        reported_user = TutorProfile.objects.filter(user=user).first()
-        if not reported_user:
-            reported_user = ParentProfile.objects.filter(user=user).first()
-            if not reported_user.parentname:
-                return name
-            name = reported_user.parentname
-        else:
-            if not reported_user.tutorname:
-                return name
-            name = reported_user.tutorname
-        return name
+            reported_user = TutorProfile.objects.filter(user=user).first()
+            if not reported_user:
+                reported_user = ParentProfile.objects.filter(user=user).first()
+                if not reported_user.parentname:
+                    return name
+                name = reported_user.parentname
+            else:
+                if not reported_user.tutorname:
+                    return name
+                name = reported_user.tutorname
+            return name
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in get_reported_name: {str(e)}")
     
     def get_reportee_name(self, obj):
-        user = obj.reportee
-        name = user.username
-        reportee_user = TutorProfile.objects.filter(user=user).first()
-        if not reportee_user:
-            reportee_user = ParentProfile.objects.filter(user=user).first()
-            if not reportee_user.parentname:
-                return name
-            name = reportee_user.parentname
-        else:
-            if not reportee_user.tutorname:
-                return name
-            name = reportee_user.tutorname
-        return name
+        try:
+            user = obj.reportee
+            name = user.username
+            reportee_user = TutorProfile.objects.filter(user=user).first()
+            if not reportee_user:
+                reportee_user = ParentProfile.objects.filter(user=user).first()
+                if not reportee_user.parentname:
+                    return name
+                name = reportee_user.parentname
+            else:
+                if not reportee_user.tutorname:
+                    return name
+                name = reportee_user.tutorname
+            return name
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in get_reportee_name: {str(e)}")
     
     def get_reported_avt(self, obj):
-        user = obj.reported
-        
-        reported_user = TutorProfile.objects.filter(user=user).first()
-        if not reported_user:
-            reported_user = ParentProfile.objects.filter(user=user).first()
-            if not reported_user.avatar:
-                return None
-            return reported_user.avatar.url
-        else:
-            if not reported_user.avatar:
-                return None
-            return reported_user.avatar.url
+        try:
+            user = obj.reported
+            
+            reported_user = TutorProfile.objects.filter(user=user).first()
+            if not reported_user:
+                reported_user = ParentProfile.objects.filter(user=user).first()
+                if not reported_user.avatar:
+                    return None
+                return reported_user.avatar.url
+            else:
+                if not reported_user.avatar:
+                    return None
+                return reported_user.avatar.url
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in get_reported_avt: {str(e)}")
         
     def get_reportee_avt(self, obj):
-        user = obj.reportee
-        
-        reportee_user = TutorProfile.objects.filter(user=user).first()
-        if not reportee_user:
-            reportee_user = ParentProfile.objects.filter(user=user).first()
-            if not reportee_user.avatar:
-                return None
-            return reportee_user.avatar.url
-        else:
-            if not reportee_user.avatar:
-                return None
-            return reportee_user.avatar.url
-        
-
+        try:
+            user = obj.reportee
+            
+            reportee_user = TutorProfile.objects.filter(user=user).first()
+            if not reportee_user:
+                reportee_user = ParentProfile.objects.filter(user=user).first()
+                if not reportee_user.avatar:
+                    return None
+                return reportee_user.avatar.url
+            else:
+                if not reportee_user.avatar:
+                    return None
+                return reportee_user.avatar.url
+        except Exception as e:
+            raise serializers.ValidationError(f"Error in get_reportee_avt: {str(e)}")

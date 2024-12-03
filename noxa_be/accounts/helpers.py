@@ -7,6 +7,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.core.mail import EmailMultiAlternatives
 from email.mime.image import MIMEImage
+import secrets
 import os
 
 def get_tokens_for_user(user):
@@ -56,6 +57,45 @@ def send_email_verification(user, request):
     # Attach HTML message
     email.attach_alternative(html_message, "text/html")
     
+    # load 7 images in static/images folder to the mail
+    static_dir = os.path.join(settings.BASE_DIR, 'static', 'images')
+    for i in range(1, 8):
+        image_path = os.path.join(static_dir, f'image-{i}.png')
+        with open(image_path, 'rb') as f:
+            image = MIMEImage(f.read())
+            image.add_header('Content-ID', f'<image{i}>')
+            email.attach(image)
+
+    email.send()
+
+def send_password_reset_email(user, request):
+    temporary_password = secrets.token_urlsafe(8)  # Tạo chuỗi ngẫu nhiên dài 8 ký tự
+    
+    # Hash mật khẩu tạm thời (không lưu plaintext vào DB)
+    user.set_password(temporary_password)
+    user.save()
+
+    subject = 'Thông báo từ hệ thống NOXA: Quên mật khẩu'
+
+    # Rendering the HTML template with context
+    html_message = render_to_string('forgot_password_verification.html', {
+        'username': user.username,
+        'temporary_password': temporary_password,
+    })
+
+    plain_message = strip_tags(html_message)
+
+    # Create EmailMultiAlternatives object
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=plain_message,
+        from_email=settings.EMAIL_HOST_USER,
+        to=[user.email],
+    )
+
+    # Attach HTML message
+    email.attach_alternative(html_message, "text/html")
+
     # load 7 images in static/images folder to the mail
     static_dir = os.path.join(settings.BASE_DIR, 'static', 'images')
     for i in range(1, 8):

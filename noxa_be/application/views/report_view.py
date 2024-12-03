@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import serializers
+import traceback
 
 from accounts.permission import IsAdmin, IsTutorOrParent
 from application.serializers.report_serializer import ReportSerializer
@@ -22,19 +24,35 @@ class ReportView(APIView):
         return [permission() for permission in self.permission_classes] 
 
     def get(self, request, pk=None):
-        if pk:
-            reported = User.objects.filter(user_id=pk).first()
-            reportee = User.objects.filter(user_id=pk).first()
-            reports = Report.objects.filter(report_id=pk).first()
+        try:
+            if pk:
+                reported = User.objects.filter(user_id=pk).first()
+                reportee = User.objects.filter(user_id=pk).first()
+                reports = Report.objects.filter(report_id=pk).first()
 
-            if reported:
-                reports = Report.objects.filter(reported=reported, resolved=False)
-            if reportee:
-                reports = Report.objects.filter(reportee=reportee, resolved=False)
-            if reports:
+                if reported:
+                    reports = Report.objects.filter(reported=reported, resolved=False)
+                if reportee:
+                    reports = Report.objects.filter(reportee=reportee, resolved=False)
+                if reports:
+                    serializer = ReportSerializer(reports, many=True)
+                    data = serializer.data
+                    for report in data:
+                        if report['type'] == 'Bình luận':
+                            comment = JobPostComment.objects.filter(comment_id=report['comment_id']).first()
+                            comment_parent_id = comment.comment_parent_id
+                            if comment_parent_id:    
+                                comment_parent = JobPostComment.objects.filter(comment_id=comment_parent_id.comment_id).first()
+                                comments =  [str(comment_parent.comment_id), str(comment.comment_id)]
+                            else:
+                                comments = [str(comment.comment_id)]
+                            report['comments'] = comments
+                            report['reported_comment'] = comment.comment
+                    return Response(data)
+            else:
+                reports = Report.objects.filter(resolved=False).order_by('-created_at')
                 serializer = ReportSerializer(reports, many=True)
-                data = serializer.data
-                for report in data:
+                for report in serializer.data:
                     if report['type'] == 'Bình luận':
                         comment = JobPostComment.objects.filter(comment_id=report['comment_id']).first()
                         comment_parent_id = comment.comment_parent_id
@@ -45,22 +63,15 @@ class ReportView(APIView):
                             comments = [str(comment.comment_id)]
                         report['comments'] = comments
                         report['reported_comment'] = comment.comment
-                return Response(data)
-        else:
-            reports = Report.objects.filter(resolved=False).order_by('-created_at')
-            serializer = ReportSerializer(reports, many=True)
-            for report in serializer.data:
-                if report['type'] == 'Bình luận':
-                    comment = JobPostComment.objects.filter(comment_id=report['comment_id']).first()
-                    comment_parent_id = comment.comment_parent_id
-                    if comment_parent_id:    
-                        comment_parent = JobPostComment.objects.filter(comment_id=comment_parent_id.comment_id).first()
-                        comments =  [str(comment_parent.comment_id), str(comment.comment_id)]
-                    else:
-                        comments = [str(comment.comment_id)]
-                    report['comments'] = comments
-                    report['reported_comment'] = comment.comment
-            return Response(serializer.data)
+                return Response(serializer.data)
+        except serializers.ValidationError as e:
+            print(f"Error in GET /reports: {e}")
+            traceback.print_exc()
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error in GET /reports: {e}")
+            traceback.print_exc()
+            return Response({'message': 'Some bad things happened on the server'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     def post(self, request):
         try: 
@@ -103,12 +114,26 @@ class ReportView(APIView):
                     return Response(data, status=status.HTTP_201_CREATED)
                 return Response(report.data, status=status.HTTP_201_CREATED)
             return Response(report.errors, status=status.HTTP_400_BAD_REQUEST)
+        except serializers.ValidationError as e:
+            print(f"Error in POST /reports: {e}")
+            traceback.print_exc()
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+            print(f"Error in POST /reports: {e}")
+            traceback.print_exc()
+            return Response({'message': 'Some bad things happened on the server'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def put(self, request):
-        report = Report.objects.filter(report_id=request.data.get('report_id')).first()
-        report.resolved = True
-
-        report.save()
-        return Response(status=status.HTTP_200_OK)
+        try:
+            report = Report.objects.filter(report_id=request.data.get('report_id')).first()
+            report.resolved = True
+            report.save()
+            return Response(status=status.HTTP_200_OK)
+        except serializers.ValidationError as e:
+            print(f"Error in PUT /reports: {e}")
+            traceback.print_exc()
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error in PUT /reports: {e}")
+            traceback.print_exc()
+            return Response({'message': 'Some bad things happened on the server'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
