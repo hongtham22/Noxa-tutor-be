@@ -52,7 +52,7 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          cd /var/www/Noxa-tutor-be
+          cd app/Noxa-tutor-be
           git checkout deploy
           git pull origin deploy
           cd noxa_be
@@ -61,5 +61,6 @@ jobs:
           pip install -r requirements.txt
           python manage.py migrate
           python manage.py collectstatic --noinput
+          sudo systemctl daemon-reload
           sudo systemctl restart scrum.service
           sudo systemctl restart nginx
