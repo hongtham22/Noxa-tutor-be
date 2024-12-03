@@ -33,7 +33,7 @@ class BaseView(APIView):
 
     def get_permissions(self):
         if self.request.method == 'GET':
-            return [AllowAny()]  # Không yêu cầu xác thực cho GET
+            return [IsAuthenticated()]  # Không yêu cầu xác thực cho GET
         if self.request.method == 'DELETE':
             return [IsAuthenticated(), IsAdminOrSpecificRole()]  # Yêu cầu xác thực cho DELETE
         return [permission() for permission in self.permission_classes] 
