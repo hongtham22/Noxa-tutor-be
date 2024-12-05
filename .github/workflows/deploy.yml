@@ -63,4 +63,5 @@ jobs:
           python manage.py collectstatic --noinput
           sudo systemctl daemon-reload
           sudo systemctl restart scrum.service
+          sudo systemctl restart daphne.service
           sudo systemctl restart nginx
