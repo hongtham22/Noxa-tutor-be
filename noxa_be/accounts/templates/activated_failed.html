@@ -3,22 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verifying failed</title>
+    <title>Email Verification Failed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+        .icon {
+            font-size: 50px;
+            color: #e74c3c; /* Màu đỏ cho trạng thái thất bại */
+        }
+        .header {
+            font-size: 24px;
+            margin: 20px 0;
+            color: #e74c3c;
+        }
+        .message {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: rgba(0, 33, 130, 1);
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: rgba(0, 33, 130, 1);
+        }
+        .form-group {
+            margin-top: 20px;
+        }
+        input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        input[type="submit"] {
+            padding: 10px 20px;
+            background-color: rgba(0, 33, 130, 1);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        input[type="submit"]:hover {
+            background-color: rgba(0, 33, 130, 1);
+        }
+    </style>
 </head>
-<body>
-    <h1>Email verifying failed!</h1>
-    <p>You will be redirected shortly...</p>
-    <!-- console loc redirect_url -->
-    <script>
-        var redirect_url = "{{ re_verify_url }}";
-        console.log(redirect_url);
-    </script>
-    <!-- print redirect_url-->
-    <p>Or click <a href="{{ re_verify_url }}">here</a> to redirect</p>
-    <form action="{{ re_verify_url }}" method="get">
-        <label for="email">Enter your email:</label>
-        <input type="email" id="email" name="email" required>
-        <button type="submit">Submit</button>
-    </form>
+<body onload="updateCountdown()">
+    <div class="container">
+        <div class="icon">❌</div>
+        <div class="header">Xác thực email thất bại!</div>
+        <div class="message">
+            Xác thực email không thành công, vui lòng thử cách khác
+        </div>
+        <a href="{{ redirect_url }}" class="btn">Quay lại</a>
+        <div class="form-group">
+            <p>Hoặc nhập email để thử lại:</p>
+            <form action="{{ re_verify_url }}" method="get">
+                <input type="email" name="email" placeholder="Enter your email" required>
+                <input type="submit" value="Xác nhận">
+            </form>
+        </div>
+    </div>
 </body>
 </html>

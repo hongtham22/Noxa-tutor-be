@@ -184,9 +184,9 @@ class ActivateAccountView(View):
             user = User.objects.get(user_id=user_id)
             user.is_active = True
             user.save()
-            return render(request, 'account_activated.html', context={'redirect_url': login_redirect_url})
+            return render(request, 'account_activated.html', context={'redirect_url': 'https://fe-scrum-five.vercel.app/login'})
         except Exception as e:
-            return render(request, 'activated_failed.html', context={'re_verify_url': re_verify_url, 'error': str(e)})
+            return render(request, 'activated_failed.html', context={'re_verify_url': re_verify_url, 'error': str(e), 'redirect_url': 'https://fe-scrum-five.vercel.app/register'})
         
 class ReverifyEmailView(APIView):
     permission_classes = [AllowAny]

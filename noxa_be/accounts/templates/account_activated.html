@@ -5,13 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verified</title>
     <script>
-        setTimeout(function() {
-            window.location.href = "{{ redirect_url }}"; // Chuyển hướng đến trang thành công
-        }, 5000); // Chờ 5 giây trước khi chuyển hướng
+        let countdown = 5; // Thời gian đếm ngược (giây)
+        function updateCountdown() {
+            const countdownElement = document.getElementById("countdown");
+            countdownElement.textContent = countdown;
+            if (countdown > 0) {
+                countdown--;
+            } else {
+                window.location.href = "{{ redirect_url }}"; // URL chuyển hướng
+            }
+        }
+        setInterval(updateCountdown, 1000); // Cập nhật mỗi giây
     </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+        .icon {
+            font-size: 50px;
+            color: rgba(241, 187, 69, 1);
+        }
+        .header {
+            font-size: 24px;
+            margin: 20px 0;
+            color: rgba(0, 33, 130, 1);
+        }
+        .message {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: rgba(0, 33, 130, 1);
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: rgba(0, 33, 130, 1);
+        }
+    </style>
 </head>
-<body>
-    <h1>Email verified successfully!</h1>
-    <p>You will be redirected shortly...</p>
+<body onload="updateCountdown()">
+    <div class="container">
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(241, 187, 69, 1)" width="50px" height="50px">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7 19.59 5.59z" />
+        </svg>
+        <div class="header">Email được xác thực thành công!</div>
+        <div class="message">
+            Tài khoản của bạn hiện đang hoạt động và đã sẵn sàng để khám phá các dịch vụ của NOXA.
+        </div>
+        <button class="btn">
+            Chuyển hướng sau <span id="countdown">5</span> giây.
+        </button>
+    </div>
 </body>
 </html>
