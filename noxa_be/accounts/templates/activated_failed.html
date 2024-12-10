@@ -109,9 +109,8 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
+            .then(response => {
+                if (response.status === 200) {
                     responseMessage.textContent = 'Email verification link has been sent!';
                     responseMessage.style.color = 'green';
                 } else {
