@@ -76,21 +76,54 @@
         }
     </style>
 </head>
-<body onload="updateCountdown()">
+<body>
     <div class="container">
         <div class="icon">❌</div>
         <div class="header">Xác thực email thất bại!</div>
         <div class="message">
-            Xác thực email không thành công, vui lòng thử cách khác
+            Xác thực email không thành công, vui lòng thử lại
         </div>
-        <a href="{{ redirect_url }}" class="btn">Quay lại</a>
         <div class="form-group">
             <p>Hoặc nhập email để thử lại:</p>
-            <form action="{{ re_verify_url }}" method="get">
+            <form id="reverify-form">
                 <input type="email" name="email" placeholder="Enter your email" required>
                 <input type="submit" value="Xác nhận">
             </form>
         </div>
+        <div id="response-message" class="message"></div>
     </div>
+
+    <script>
+        document.getElementById('reverify-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+
+            const email = event.target.email.value;
+            const responseMessage = document.getElementById('response-message');
+
+            // Construct the URL with the email parameter
+            const url = `https://147.182.214.11/api/reverify-email/?email=${encodeURIComponent(email)}`;
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    responseMessage.textContent = 'Email verification link has been sent!';
+                    responseMessage.style.color = 'green';
+                } else {
+                    responseMessage.textContent = 'Failed to send verification link. Please try again.';
+                    responseMessage.style.color = 'red';
+                }
+            })
+            .catch(error => {
+                responseMessage.textContent = 'An error occurred. Please try again.';
+                responseMessage.style.color = 'red';
+            });
+        });
+    </script>
 </body>
 </html>
