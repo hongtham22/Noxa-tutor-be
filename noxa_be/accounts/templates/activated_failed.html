@@ -111,7 +111,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
+                if (data.ok) {
                     responseMessage.textContent = 'Email verification link has been sent!';
                     responseMessage.style.color = 'green';
                 } else {
